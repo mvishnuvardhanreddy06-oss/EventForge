@@ -1,0 +1,13 @@
+### List Organizations
+GET http://localhost:5000/api/organizations
+
+### Create Organization
+POST http://localhost:5000/api/organizations
+Content-Type: application/json
+
+{
+  "name": "Vertex Global Summits",
+  "email": "contact@vertexsummits.io",
+  "description": "Premier enterprise summit organizers",
+  "subscriptionPlan": "Enterprise"
+}

@@ -1,0 +1,16 @@
+### List Tickets for Event
+GET http://localhost:5000/api/tickets?eventId=66d000000000000000000001
+
+### Create VIP Ticket Tier
+POST http://localhost:5000/api/tickets
+Content-Type: application/json
+
+{
+  "eventId": "66d000000000000000000001",
+  "name": "VIP All-Access Pass",
+  "description": "Includes keynote seating, VIP networking reception, and lunch.",
+  "price": 499,
+  "quantity": 50,
+  "saleEnd": "2026-10-14T23:59:59Z",
+  "benefits": ["VIP Lounge", "Speaker Dinner", "Priority Check-in"]
+}

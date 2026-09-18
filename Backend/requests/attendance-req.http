@@ -1,0 +1,20 @@
+### Staff Scans Attendee QR
+POST http://localhost:5000/api/attendance/scan
+Content-Type: application/json
+Authorization: Bearer <STAFF_TOKEN>
+
+{
+  "qrToken": "EFQR-7a8f9b2c3d4e5f60",
+  "eventId": "66d000000000000000000001"
+}
+
+### Record Session Attendance
+POST http://localhost:5000/api/attendance/session
+Content-Type: application/json
+Authorization: Bearer <STAFF_TOKEN>
+
+{
+  "sessionId": "66d000000000000000000015",
+  "attendeeId": "66d000000000000000000010",
+  "method": "qr"
+}

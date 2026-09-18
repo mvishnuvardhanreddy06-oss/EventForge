@@ -1,0 +1,14 @@
+### Register for Event (Supports coupons & waitlist)
+POST http://localhost:5000/api/registrations
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "eventId": "66d000000000000000000001",
+  "ticketId": "66d000000000000000000021",
+  "couponCode": "TECHVIP20"
+}
+
+### Cancel Registration (Promotes waitlisted attendee)
+PATCH http://localhost:5000/api/registrations/66d000000000000000000031/cancel
+Authorization: Bearer <TOKEN>

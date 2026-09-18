@@ -1,0 +1,14 @@
+### Submit Session Feedback
+POST http://localhost:5000/api/feedback
+Content-Type: application/json
+Authorization: Bearer <ATTENDEE_TOKEN>
+
+{
+  "eventId": "66d000000000000000000001",
+  "sessionId": "66d000000000000000000015",
+  "rating": 5,
+  "comment": "Outstanding keynote! The architectural breakdown was exceptionally clear."
+}
+
+### View Feedback Stats
+GET http://localhost:5000/api/feedback/stats/66d000000000000000000001

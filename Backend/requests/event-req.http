@@ -1,0 +1,21 @@
+### List Events
+GET http://localhost:5000/api/events?category=Tech
+
+### Get Event by ID
+GET http://localhost:5000/api/events/66d000000000000000000001
+
+### Create Event
+POST http://localhost:5000/api/events
+Content-Type: application/json
+
+{
+  "title": "Global AI & Cloud Summit 2026",
+  "description": "Executive conference exploring modern distributed architectures and AI agents.",
+  "category": "Artificial Intelligence",
+  "eventType": "Conference",
+  "startDate": "2026-10-15T09:00:00Z",
+  "endDate": "2026-10-17T18:00:00Z",
+  "registrationEnd": "2026-10-14T23:59:59Z",
+  "capacity": 500,
+  "tags": ["AI", "Cloud", "DevOps"]
+}

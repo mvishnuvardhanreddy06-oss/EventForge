@@ -1,0 +1,17 @@
+### Generate Event Description in AI Studio
+POST http://localhost:5000/api/ai/generate
+Content-Type: application/json
+Authorization: Bearer <ORGANIZER_TOKEN>
+
+{
+  "type": "event-description",
+  "title": "FutureTech India 2027",
+  "theme": "AI and Business Transformation",
+  "audience": "Corporate professionals & Enterprise Architects",
+  "category": "Artificial Intelligence",
+  "keyTopics": "Agentic Workflows, Scalable LLMs, Enterprise Security"
+}
+
+### Get AI Session Recommendations
+GET http://localhost:5000/api/ai/recommendations/66d000000000000000000001
+Authorization: Bearer <ATTENDEE_TOKEN>

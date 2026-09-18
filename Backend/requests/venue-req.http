@@ -1,0 +1,18 @@
+### List Venues
+GET http://localhost:5000/api/venues
+
+### Create Venue
+POST http://localhost:5000/api/venues
+Content-Type: application/json
+
+{
+  "name": "Grand Tech Convention Center",
+  "address": "450 Silicon Avenue",
+  "city": "Bengaluru",
+  "capacity": 1200,
+  "rooms": [
+    { "name": "Main Hall A", "capacity": 600, "floor": "1st Floor" },
+    { "name": "Workshop Room B", "capacity": 150, "floor": "2nd Floor" }
+  ],
+  "facilities": ["High-speed Wi-Fi", "A/V Recording", "Live Streaming"]
+}

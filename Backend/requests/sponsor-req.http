@@ -1,0 +1,14 @@
+### List Sponsors
+GET http://localhost:5000/api/sponsors
+
+### Register Sponsor
+POST http://localhost:5000/api/sponsors
+Content-Type: application/json
+
+{
+  "eventId": "66d000000000000000000001",
+  "companyName": "CloudScale Technologies",
+  "contactPerson": "David Miller",
+  "email": "partnerships@cloudscale.io",
+  "website": "https://cloudscale.io"
+}

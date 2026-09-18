@@ -1,0 +1,14 @@
+### List Speakers
+GET http://localhost:5000/api/speakers
+
+### Create Speaker Profile
+POST http://localhost:5000/api/speakers
+Content-Type: application/json
+
+{
+  "name": "Dr. Priya Sharma",
+  "designation": "VP of AI Research",
+  "company": "DeepNeural Corp",
+  "bio": "Pioneered multi-modal generative agents and decentralized computing.",
+  "expertise": ["Artificial Intelligence", "LLM Orchestration"]
+}

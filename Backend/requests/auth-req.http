@@ -1,0 +1,25 @@
+### Register New User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Sarah Connor",
+  "email": "sarah@enterprise.io",
+  "password": "SecurePass123!",
+  "role": "attendee",
+  "interests": ["Artificial Intelligence", "Cloud Computing"]
+}
+
+### Login
+# @name login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mvishnuvardhanreddy33@gmail.com",
+  "password": "AdminSecure2026!"
+}
+
+### Get Current User Profile
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer {{login.response.body.data.token}}

@@ -1,0 +1,15 @@
+### List Sessions
+GET http://localhost:5000/api/sessions
+
+### Create Session with Conflict Check
+POST http://localhost:5000/api/sessions
+Content-Type: application/json
+
+{
+  "eventId": "66d000000000000000000001",
+  "title": "Architecting Autonomous AI Agents",
+  "category": "Artificial Intelligence",
+  "startTime": "2026-10-15T10:00:00Z",
+  "endTime": "2026-10-15T11:00:00Z",
+  "capacity": 200
+}
