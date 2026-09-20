@@ -33,6 +33,7 @@ import Sponsors from '../pages/organizer/Sponsors';
 import SponsorshipPackages from '../pages/organizer/SponsorshipPackages';
 import Tickets from '../pages/organizer/Tickets';
 import Registrations from '../pages/organizer/Registrations';
+import Attendees from '../pages/organizer/Attendees';
 import Announcements from '../pages/organizer/Announcements';
 import Feedback from '../pages/organizer/Feedback';
 import Analytics from '../pages/organizer/Analytics';
@@ -122,7 +123,7 @@ const AppRoutes = () => {
             <Route path="/organizer/events/create" element={<CreateEvent />} />
             <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
             <Route path="/organizer/events/:id" element={<EventDetails />} />
-            <Route path="/organizer/events/:id/registrations" element={<Registrations />} />
+            <Route path="/organizer/events/:id/registrations" element={<Attendees />} />
             <Route path="/organizer/events/:id/analytics" element={<Analytics />} />
             <Route path="/organizer/venues" element={<Venues />} />
             <Route path="/organizer/sessions" element={<Sessions />} />
@@ -130,7 +131,8 @@ const AppRoutes = () => {
             <Route path="/organizer/sponsors" element={<Sponsors />} />
             <Route path="/organizer/packages" element={<SponsorshipPackages />} />
             <Route path="/organizer/tickets" element={<Tickets />} />
-            <Route path="/organizer/registrations" element={<Registrations />} />
+            <Route path="/organizer/attendees" element={<Attendees />} />
+            <Route path="/organizer/registrations" element={<Attendees />} />
             <Route path="/organizer/announcements" element={<Announcements />} />
             <Route path="/organizer/feedback" element={<Feedback />} />
             <Route path="/organizer/analytics" element={<Analytics />} />

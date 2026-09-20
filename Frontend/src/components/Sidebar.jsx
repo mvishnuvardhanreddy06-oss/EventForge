@@ -144,13 +144,13 @@ const Sidebar = () => {
           { label: 'Venues', to: '/organizer/venues', icon: Building2 },
           { label: 'Sessions', to: '/organizer/sessions', icon: Clock },
           { label: 'Speakers', to: '/organizer/speakers', icon: Mic },
-          { label: 'Sponsors', to: '/organizer/sponsors', icon: Award }
+          { label: 'Sponsors', to: '/organizer/sponsors', icon: Award },
+          { label: 'Attendees', to: '/organizer/attendees', icon: Users }
         ]
       },
       {
         title: 'PEOPLE',
         items: [
-          { label: 'Attendees', to: '/organizer/registrations', icon: Users },
           { label: 'Staff', to: '/staff/dashboard', icon: ShieldCheck }
         ]
       },
@@ -247,7 +247,7 @@ const Sidebar = () => {
           { label: 'Sponsors', to: '/organizer/sponsors', icon: Award },
           { label: 'Sponsorship Packages', to: '/organizer/packages', icon: PackageCheck },
           { label: 'Tickets', to: '/organizer/tickets', icon: Ticket },
-          { label: 'Registrations', to: '/organizer/registrations', icon: Users },
+          { label: 'Attendees', to: '/organizer/attendees', icon: Users },
           { label: 'Announcements', to: '/organizer/announcements', icon: Megaphone },
           { label: 'Feedback', to: '/organizer/feedback', icon: MessageSquare },
           { label: 'Analytics', to: '/organizer/analytics', icon: BarChart3 },
