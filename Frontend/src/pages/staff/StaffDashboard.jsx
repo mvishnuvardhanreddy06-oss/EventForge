@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { eventService, attendanceService } from '../../services/api';
 import Loader from '../../components/Loader';
 import { QrCode, Clock, Users, ArrowRight } from 'lucide-react';
 
 const StaffDashboard = () => {
+  const { user } = useAuth();
+
+  // If accessed by an Event Organizer, redirect to Organizer Staff Management page
+  if (user?.role === 'organizer') {
+    return <Navigate to="/organizer/staff" replace />;
+  }
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 

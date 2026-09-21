@@ -39,6 +39,7 @@ import Feedback from '../pages/organizer/Feedback';
 import Analytics from '../pages/organizer/Analytics';
 import AIStudio from '../pages/organizer/AIStudio';
 import OrganizerSettings from '../pages/organizer/OrganizerSettings';
+import Staff from '../pages/organizer/Staff';
 
 // Staff Pages
 import StaffDashboard from '../pages/staff/StaffDashboard';
@@ -138,7 +139,7 @@ const AppRoutes = () => {
             <Route path="/organizer/analytics" element={<Analytics />} />
             <Route path="/organizer/ai-studio" element={<AIStudio />} />
             <Route path="/organizer/settings" element={<OrganizerSettings />} />
-            <Route path="/organizer/staff" element={<StaffDashboard />} />
+            <Route path="/organizer/staff" element={<Staff />} />
           </Route>
 
           {/* Staff Routes */}
