@@ -6,10 +6,11 @@ const UserModel = require('../models/UserModel');
 const verifyToken = require('../middlewares/verifyToken');
 const verifyRole = require('../middlewares/verifyRole');
 const validateRequest = require('../middlewares/validateRequest');
+const validateObjectId = require('../middlewares/validateObjectId');
 const { ROLES } = require('../utils/constants');
 
 // GET /api/organizations (Admin & Organizers)
-router.get('/', verifyToken, async (req, res, next) => {
+router.get('/', verifyToken, verifyRole(ROLES.ADMIN, ROLES.ORGANIZER), async (req, res, next) => {
   try {
     const query = {};
     if (req.user.role === ROLES.ORGANIZER && req.user.organizationId) {
@@ -27,8 +28,17 @@ router.get('/', verifyToken, async (req, res, next) => {
 });
 
 // GET /api/organizations/:id
-router.get('/:id', verifyToken, async (req, res, next) => {
+router.get('/:id', verifyToken, validateObjectId('id'), async (req, res, next) => {
   try {
+    // If organizer, only allow viewing their own organization
+    if (req.user.role === ROLES.ORGANIZER && req.user.organizationId?.toString() !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: You do not have permission to view other organizations.',
+        error: { code: 'FORBIDDEN_ORGANIZATION_ACCESS' }
+      });
+    }
+
     const organization = await OrganizationModel.findById(req.params.id);
     if (!organization) {
       return res.status(404).json({ success: false, message: 'Organization not found' });
@@ -73,10 +83,14 @@ router.post('/', verifyToken, verifyRole(ROLES.ADMIN), validateRequest(['name', 
 });
 
 // PUT /api/organizations/:id (Admin or managing Organizer)
-router.put('/:id', verifyToken, async (req, res, next) => {
+router.put('/:id', verifyToken, validateObjectId('id'), async (req, res, next) => {
   try {
     if (req.user.role !== ROLES.ADMIN && req.user.organizationId?.toString() !== req.params.id) {
-      return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions to update this organization' });
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Insufficient permissions to update this organization',
+        error: { code: 'FORBIDDEN_ORGANIZATION_ACCESS' }
+      });
     }
 
     const updated = await OrganizationModel.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -93,7 +107,7 @@ router.put('/:id', verifyToken, async (req, res, next) => {
 });
 
 // PATCH /api/organizations/:id/status (Admin)
-router.patch('/:id/status', verifyToken, verifyRole(ROLES.ADMIN), async (req, res, next) => {
+router.patch('/:id/status', verifyToken, verifyRole(ROLES.ADMIN), validateObjectId('id'), async (req, res, next) => {
   try {
     const org = await OrganizationModel.findById(req.params.id);
     if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });

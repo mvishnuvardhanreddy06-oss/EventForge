@@ -7,11 +7,33 @@ const verifyToken = require('../middlewares/verifyToken');
 const verifyRole = require('../middlewares/verifyRole');
 const validateRequest = require('../middlewares/validateRequest');
 const { ROLES } = require('../utils/constants');
+const validateObjectId = require('../middlewares/validateObjectId');
+
+const ALLOWED_REGISTRATION_ROLES = [ROLES.ATTENDEE, ROLES.ORGANIZER, ROLES.SPEAKER, ROLES.SPONSOR];
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 // POST /api/auth/register
 router.post('/register', validateRequest(['name', 'email', 'password']), async (req, res, next) => {
   try {
     const { name, email, password, role = ROLES.ATTENDEE, organizationId, phone, interests } = req.body;
+
+    // Privilege escalation prevention: strictly block admin or staff self-registration
+    if (role && !ALLOWED_REGISTRATION_ROLES.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Registration with elevated roles (Admin, Staff) is prohibited.',
+        error: { code: 'FORBIDDEN_ROLE_REGISTRATION', attemptedRole: role }
+      });
+    }
+
+    // Password complexity enforcement
+    if (!PASSWORD_REGEX.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+        error: { code: 'WEAK_PASSWORD' }
+      });
+    }
 
     const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
     if (existingUser) {
@@ -181,7 +203,7 @@ router.get('/users', verifyToken, async (req, res, next) => {
 });
 
 // PATCH /api/auth/users/:id/status (admin)
-router.patch('/users/:id/status', verifyToken, verifyRole(ROLES.ADMIN), async (req, res, next) => {
+router.patch('/users/:id/status', verifyToken, verifyRole(ROLES.ADMIN), validateObjectId('id'), async (req, res, next) => {
   try {
     const user = await UserModel.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });

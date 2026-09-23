@@ -4,7 +4,15 @@ const materialSchema = new mongoose.Schema({
   title: { type: String, required: true },
   url: { type: String, required: true },
   fileType: { type: String, default: 'pdf' },
-  uploadedAt: { type: Date, default: Date.now }
+  fileSize: { type: String, default: '0 MB' },
+  description: { type: String, default: '' },
+  status: {
+    type: String,
+    enum: ['Uploaded', 'Under Review', 'Approved', 'Changes Requested'],
+    default: 'Uploaded'
+  },
+  uploadedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 const sessionSchema = new mongoose.Schema({
@@ -56,6 +64,19 @@ const sessionSchema = new mongoose.Schema({
     type: Number,
     default: 100
   },
+  expectedAttendance: {
+    type: Number,
+    default: 0
+  },
+  organizerNotes: {
+    type: String,
+    default: 'Please arrive at the session room 20-30 minutes prior to session commencement.'
+  },
+  speakerConfirmationStatus: {
+    type: String,
+    enum: ['Pending', 'Confirmed', 'Declined'],
+    default: 'Confirmed'
+  },
   tags: [{
     type: String,
     trim: true
@@ -63,7 +84,7 @@ const sessionSchema = new mongoose.Schema({
   materials: [materialSchema],
   status: {
     type: String,
-    enum: ['scheduled', 'ongoing', 'completed', 'cancelled'],
+    enum: ['draft', 'invited', 'pending', 'scheduled', 'ongoing', 'completed', 'cancelled', 'confirmed'],
     default: 'scheduled'
   }
 }, {

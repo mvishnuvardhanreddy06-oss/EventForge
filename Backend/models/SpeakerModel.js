@@ -24,6 +24,10 @@ const speakerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  shortBio: {
+    type: String,
+    default: ''
+  },
   bio: {
     type: String,
     default: ''
@@ -32,7 +36,31 @@ const speakerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  phone: {
+    type: String,
+    default: ''
+  },
+  location: {
+    type: String,
+    default: ''
+  },
+  country: {
+    type: String,
+    default: 'India'
+  },
+  yearsExperience: {
+    type: Number,
+    default: 5
+  },
+  industry: {
+    type: String,
+    default: 'Technology & Software'
+  },
   expertise: [{
+    type: String,
+    trim: true
+  }],
+  preferredSessionTypes: [{
     type: String,
     trim: true
   }],
@@ -46,7 +74,24 @@ const speakerSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     available: { type: Boolean, default: true },
     notes: { type: String, default: '' }
-  }]
+  }],
+  weeklyAvailability: [{
+    day: { type: String, required: true },
+    available: { type: Boolean, default: true },
+    startTime: { type: String, default: '09:00 AM' },
+    endTime: { type: String, default: '06:00 PM' }
+  }],
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    sessionUpdates: { type: Boolean, default: true },
+    organizerMessages: { type: Boolean, default: true },
+    presentationReminders: { type: Boolean, default: true },
+    eventAnnouncements: { type: Boolean, default: true },
+    scheduleChanges: { type: Boolean, default: true },
+    browserNotifications: { type: Boolean, default: true },
+    profileVisibility: { type: String, enum: ['public', 'attendees_only', 'organizers_only'], default: 'public' },
+    profileDiscovery: { type: Boolean, default: true }
+  }
 }, {
   timestamps: true
 });

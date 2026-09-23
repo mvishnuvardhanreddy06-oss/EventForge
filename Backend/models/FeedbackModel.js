@@ -18,11 +18,51 @@ const feedbackSchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
-    required: [true, 'Rating is required'],
     min: [1, 'Minimum rating is 1'],
-    max: [5, 'Maximum rating is 5']
+    max: [5, 'Maximum rating is 5'],
+    default: 5
+  },
+  eventRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 5
+  },
+  sessionRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 5
+  },
+  speakerRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 5
+  },
+  venueRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 5
+  },
+  overallRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 5
   },
   comment: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  likedAspects: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  improvements: {
     type: String,
     default: '',
     trim: true

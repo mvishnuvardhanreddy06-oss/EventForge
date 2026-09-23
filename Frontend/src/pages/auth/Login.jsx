@@ -19,8 +19,9 @@ import {
 } from 'lucide-react';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
+  const [selectedRole, setSelectedRole] = useState('ATTENDEE');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,23 +35,37 @@ const Login = () => {
     setLoading(true);
     try {
       const user = await login(email, password);
-      switch (user.role) {
-        case 'admin':
+
+      // Authenticated user's actual role retrieved from backend / JWT session
+      const actualRole = (user?.role || '').toUpperCase();
+      const chosenRole = (selectedRole || '').toUpperCase();
+
+      // Strict security check: Selected role in frontend cannot override actual account role
+      if (chosenRole && chosenRole !== actualRole) {
+        logout();
+        setError('Selected role does not match this account.');
+        setLoading(false);
+        return;
+      }
+
+      // Role-based redirects based on the authenticated user's actual backend role:
+      switch (actualRole) {
+        case 'ADMIN':
           navigate('/admin/dashboard');
           break;
-        case 'organizer':
+        case 'ORGANIZER':
           navigate('/organizer/dashboard');
           break;
-        case 'staff':
+        case 'STAFF':
           navigate('/staff/dashboard');
           break;
-        case 'speaker':
+        case 'SPEAKER':
           navigate('/speaker/dashboard');
           break;
-        case 'sponsor':
+        case 'SPONSOR':
           navigate('/sponsor/dashboard');
           break;
-        case 'attendee':
+        case 'ATTENDEE':
         default:
           navigate('/attendee/dashboard');
           break;
@@ -62,9 +77,12 @@ const Login = () => {
     }
   };
 
-  const setTestRole = (testEmail) => {
+  const setTestRole = (testEmail, roleKey) => {
     setEmail(testEmail);
     setPassword('Password123!');
+    if (roleKey) {
+      setSelectedRole(roleKey);
+    }
     setError('');
   };
 
@@ -105,6 +123,27 @@ const Login = () => {
 
         {/* FORM */}
         <form onSubmit={handleLogin} className="space-y-4">
+          {/* Role Selection Dropdown */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Login as
+            </label>
+            <div className="relative">
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full px-3.5 py-3 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none transition-all cursor-pointer"
+              >
+                <option value="ADMIN">Platform Admin</option>
+                <option value="ORGANIZER">Event Organizer</option>
+                <option value="STAFF">Event Staff</option>
+                <option value="SPEAKER">Speaker</option>
+                <option value="SPONSOR">Sponsor</option>
+                <option value="ATTENDEE">Attendee</option>
+              </select>
+            </div>
+          </div>
+
           {/* Corporate Email Field */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -214,7 +253,7 @@ const Login = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
           <button
             type="button"
-            onClick={() => setTestRole('mvishnuvardhanreddy33@gmail.com')}
+            onClick={() => setTestRole('mvishnuvardhanreddy33@gmail.com', 'ADMIN')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Platform Admin"
           >
@@ -224,7 +263,7 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={() => setTestRole('organizer@nexus.io')}
+            onClick={() => setTestRole('organizer@nexus.io', 'ORGANIZER')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Event Organizer"
           >
@@ -234,7 +273,7 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={() => setTestRole('staff1@eventforge.io')}
+            onClick={() => setTestRole('staff1@eventforge.io', 'STAFF')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Event Staff"
           >
@@ -244,7 +283,7 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={() => setTestRole('speaker1@eventforge.io')}
+            onClick={() => setTestRole('speaker1@eventforge.io', 'SPEAKER')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Keynote Speaker"
           >
@@ -254,7 +293,7 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={() => setTestRole('sponsor1@eventforge.io')}
+            onClick={() => setTestRole('sponsor1@eventforge.io', 'SPONSOR')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Corporate Sponsor"
           >
@@ -264,7 +303,7 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={() => setTestRole('attendee1@example.com')}
+            onClick={() => setTestRole('attendee1@example.com', 'ATTENDEE')}
             className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
             title="Autofill Conference Attendee"
           >

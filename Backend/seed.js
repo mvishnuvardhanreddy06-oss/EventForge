@@ -18,6 +18,9 @@ const AnnouncementModel = require('./models/AnnouncementModel');
 const CouponModel = require('./models/CouponModel');
 const FeedbackModel = require('./models/FeedbackModel');
 const NotificationModel = require('./models/NotificationModel');
+const InvoiceModel = require('./models/InvoiceModel');
+const AuditLogModel = require('./models/AuditLogModel');
+const SubscriptionPlanModel = require('./models/SubscriptionPlanModel');
 
 const { generateQRToken, createRegistrationQR } = require('./services/qrService');
 const { ROLES, EVENT_STATUS, REGISTRATION_STATUS, ATTENDANCE_METHOD } = require('./utils/constants');
@@ -44,7 +47,10 @@ const seedDatabase = async () => {
       AnnouncementModel.deleteMany({}),
       CouponModel.deleteMany({}),
       FeedbackModel.deleteMany({}),
-      NotificationModel.deleteMany({})
+      NotificationModel.deleteMany({}),
+      InvoiceModel.deleteMany({}),
+      AuditLogModel.deleteMany({}),
+      SubscriptionPlanModel.deleteMany({})
     ]);
 
     const defaultPassword = 'Password123!';
@@ -249,6 +255,10 @@ const seedDatabase = async () => {
         email: `attendee${i}@example.com`,
         password: defaultPassword,
         role: ROLES.ATTENDEE,
+        phone: i === 1 ? '+91 98765 43210' : `+1 (555) 010-${1000 + i}`,
+        location: i === 1 ? 'Bengaluru, India' : 'San Francisco, CA',
+        timezone: i === 1 ? 'Asia/Kolkata' : 'America/Los_Angeles',
+        language: 'English',
         interests
       });
       attendeeDocs.push(attendee);
@@ -427,18 +437,47 @@ const seedDatabase = async () => {
       });
       sponsorDocs.push(sponsor);
 
-      await SponsorshipModel.create({
+      const isGoogleCloud = i === 0;
+      const deliverables = isGoogleCloud ? [
+        { title: 'Brand Logo on Official Banner', dueDate: new Date(now.getTime() + 5 * dayMs), status: 'approved', priority: 'high', completedAt: new Date() },
+        { title: 'Executive Speaker Bio Submission', dueDate: new Date(now.getTime() + 10 * dayMs), status: 'completed', priority: 'high', completedAt: new Date() },
+        { title: 'Exhibition Hall Booth Requirements', dueDate: new Date(now.getTime() + 12 * dayMs), status: 'in_progress', priority: 'medium' },
+        { title: 'Promotional Video for Session Breakouts', dueDate: new Date(now.getTime() + 14 * dayMs), status: 'changes_requested', feedback: 'Please upload video in 1080p MP4 format.', priority: 'medium' },
+        { title: 'Attendee Swag Bag Digital Inserts', dueDate: new Date(now.getTime() + 20 * dayMs), status: 'pending', priority: 'low' }
+      ] : [
+        { title: 'Brand Logo Upload on Portal', dueDate: new Date(now.getTime() + 5 * dayMs), status: 'completed', completedAt: new Date() },
+        { title: 'Executive Speaker Bio Submission', dueDate: new Date(now.getTime() + 10 * dayMs), status: 'completed', completedAt: new Date() },
+        { title: 'Exhibition Hall Booth Design Approval', dueDate: new Date(now.getTime() + 12 * dayMs), status: i % 2 === 0 ? 'completed' : 'in_progress' },
+        { title: 'Swag Bag Collateral Delivery', dueDate: new Date(now.getTime() + 14 * dayMs), status: 'pending' }
+      ];
+
+      const spDoc = await SponsorshipModel.create({
         sponsorId: sponsor._id,
         eventId: event1._id,
         packageId: pkg._id,
-        deliverables: [
-          { title: 'Brand Logo Upload on Portal', dueDate: new Date(now.getTime() + 5 * dayMs), status: 'completed', completedAt: new Date() },
-          { title: 'Executive Speaker Bio Submission', dueDate: new Date(now.getTime() + 10 * dayMs), status: 'completed', completedAt: new Date() },
-          { title: 'Exhibition Hall Booth Design Approval', dueDate: new Date(now.getTime() + 12 * dayMs), status: i % 2 === 0 ? 'completed' : 'in_progress' },
-          { title: 'Swag Bag Collateral Delivery', dueDate: new Date(now.getTime() + 14 * dayMs), status: 'pending' }
-        ],
+        deliverables,
         paymentStatus: 'paid',
+        contractStatus: 'active',
+        totalAmount: pkg.price || 500000,
+        paidAmount: pkg.price || 500000,
         status: 'active'
+      });
+
+      // Create invoice for sponsor
+      await InvoiceModel.create({
+        invoiceNumber: `INV-2026-004${i + 2}`,
+        sponsorId: sponsor._id,
+        sponsorshipId: spDoc._id,
+        eventId: event1._id,
+        packageId: pkg._id,
+        amount: Math.round((pkg.price || 500000) * 0.84),
+        tax: Math.round((pkg.price || 500000) * 0.16),
+        total: pkg.price || 500000,
+        dueDate: new Date(now.getTime() - 10 * dayMs),
+        paidDate: new Date(now.getTime() - 12 * dayMs),
+        paymentMethod: i % 2 === 0 ? 'Wire Transfer' : 'Corporate Credit Card',
+        status: 'paid',
+        notes: `Annual Corporate Sponsorship Agreement - ${pkg.name}`
       });
     }
 
@@ -565,6 +604,9 @@ const seedDatabase = async () => {
       capacity: 600,
       tags: ['Business', 'Startups', 'Leadership']
     });
+
+    // Populate attendee 1 personal schedule with sample sessions
+    await UserModel.findByIdAndUpdate(attendeeDocs[0]._id, { personalSchedule: [session1._id, session2._id] });
 
     // 13. Coupons
     console.log('Creating Coupons...');
@@ -745,6 +787,76 @@ const seedDatabase = async () => {
       message: 'Your VIP badge and QR code are ready in your EventForge dashboard.',
       type: 'info'
     });
+
+    // 18. Subscription Plans
+    console.log('Seeding Subscription Plans...');
+    await SubscriptionPlanModel.create([
+      {
+        name: 'Starter',
+        price: 49,
+        billingPeriod: 'Monthly',
+        features: ['Up to 3 Events', '500 Attendees per event', 'Standard Analytics', 'Email Support'],
+        limits: { maxUsers: 5, maxEvents: 3, storageGB: 10 },
+        status: 'active'
+      },
+      {
+        name: 'Pro',
+        price: 199,
+        billingPeriod: 'Monthly',
+        features: ['Up to 15 Events', '5,000 Attendees per event', 'Advanced Analytics & AI Assistant', 'Priority Support', 'Custom Branding'],
+        limits: { maxUsers: 25, maxEvents: 15, storageGB: 50 },
+        status: 'active'
+      },
+      {
+        name: 'Enterprise',
+        price: 499,
+        billingPeriod: 'Monthly',
+        features: ['Unlimited Events', 'Unlimited Attendees', 'Dedicated Account Manager', 'Custom Integrations', 'SLA 99.9%', 'Full Audit Trail'],
+        limits: { maxUsers: 100, maxEvents: 100, storageGB: 500 },
+        status: 'active'
+      }
+    ]);
+
+    // 19. Audit Logs
+    console.log('Seeding Sample Audit Logs...');
+    await AuditLogModel.create([
+      {
+        user: { userId: organizer1._id, name: organizer1.name, email: organizer1.email, role: 'ORGANIZER' },
+        action: 'Created',
+        resource: 'Event',
+        resourceId: event1._id.toString(),
+        details: `Created new event "${event1.title}"`,
+        ipAddress: '192.168.1.10',
+        status: 'Success'
+      },
+      {
+        user: { userId: attendeeDocs[0]._id, name: attendeeDocs[0].name, email: attendeeDocs[0].email, role: 'ATTENDEE' },
+        action: 'Paid',
+        resource: 'Registration',
+        resourceId: 'EF-2026-1000',
+        details: `Registered and purchased ticket for "${event1.title}"`,
+        ipAddress: '192.168.1.15',
+        status: 'Success'
+      },
+      {
+        user: { userId: staffMembers[0]._id, name: staffMembers[0].name, email: staffMembers[0].email, role: 'EVENT_STAFF' },
+        action: 'Checked In',
+        resource: 'Registration',
+        resourceId: 'EF-2026-1000',
+        details: 'Scanned attendee QR pass at Entrance Gate A',
+        ipAddress: '192.168.1.20',
+        status: 'Success'
+      },
+      {
+        user: { userId: sponsorUsers[0]._id, name: sponsorUsers[0].name, email: sponsorUsers[0].email, role: 'SPONSOR' },
+        action: 'Updated',
+        resource: 'Deliverable',
+        resourceId: 'deliv-logo-001',
+        details: 'Uploaded high-res vector logo asset for review',
+        ipAddress: '192.168.1.45',
+        status: 'Success'
+      }
+    ]);
 
     console.log('====================================================');
     console.log('  EventForge Database Seed Completed Successfully!  ');

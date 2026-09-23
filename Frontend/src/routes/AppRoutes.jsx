@@ -49,28 +49,42 @@ import AttendeeSupport from '../pages/staff/AttendeeSupport';
 
 // Speaker Pages
 import SpeakerDashboard from '../pages/speaker/SpeakerDashboard';
-import SpeakerProfile from '../pages/speaker/SpeakerProfile';
+import SpeakerEvents from '../pages/speaker/SpeakerEvents';
 import MySessions from '../pages/speaker/MySessions';
-import Availability from '../pages/speaker/Availability';
+import SpeakerSessionDetails from '../pages/speaker/SpeakerSessionDetails';
 import Materials from '../pages/speaker/Materials';
+import Availability from '../pages/speaker/Availability';
+import SpeakerProfile from '../pages/speaker/SpeakerProfile';
+import SpeakerAnnouncements from '../pages/speaker/SpeakerAnnouncements';
+import SpeakerSettings from '../pages/speaker/SpeakerSettings';
 
 // Attendee Pages
 import AttendeeDashboard from '../pages/attendee/AttendeeDashboard';
 import BrowseEvents from '../pages/attendee/BrowseEvents';
 import AttendeeEventDetails from '../pages/attendee/EventDetails';
 import Registration from '../pages/attendee/Registration';
+import MyRegistrations from '../pages/attendee/MyRegistrations';
 import MyTickets from '../pages/attendee/MyTickets';
+import MySchedule from '../pages/attendee/MySchedule';
 import AttendeeMySessions from '../pages/attendee/MySessions';
+import AttendeeNotifications from '../pages/attendee/AttendeeNotifications';
 import MyQRCode from '../pages/attendee/MyQRCode';
 import Recommendations from '../pages/attendee/Recommendations';
 import AttendeeFeedback from '../pages/attendee/Feedback';
+import AttendeeSettings from '../pages/attendee/AttendeeSettings';
 
 // Sponsor Pages
 import SponsorDashboard from '../pages/sponsor/SponsorDashboard';
+import SponsorEvents from '../pages/sponsor/SponsorEvents';
+import Sponsorships from '../pages/sponsor/Sponsorships';
+import SponsorshipDetails from '../pages/sponsor/SponsorshipDetails';
+import Deliverables from '../pages/sponsor/Deliverables';
 import SponsorProfile from '../pages/sponsor/SponsorProfile';
+import PaymentsInvoices from '../pages/sponsor/PaymentsInvoices';
+import SponsorAnnouncements from '../pages/sponsor/SponsorAnnouncements';
+import SponsorSettings from '../pages/sponsor/SponsorSettings';
 import Package from '../pages/sponsor/Package';
 import BrandAssets from '../pages/sponsor/BrandAssets';
-import Deliverables from '../pages/sponsor/Deliverables';
 
 import Landing from '../pages/Landing';
 
@@ -153,10 +167,14 @@ const AppRoutes = () => {
           {/* Speaker Routes */}
           <Route element={<RoleRoute allowedRoles={['speaker', 'organizer', 'admin']} />}>
             <Route path="/speaker/dashboard" element={<SpeakerDashboard />} />
-            <Route path="/speaker/profile" element={<SpeakerProfile />} />
+            <Route path="/speaker/events" element={<SpeakerEvents />} />
             <Route path="/speaker/sessions" element={<MySessions />} />
-            <Route path="/speaker/availability" element={<Availability />} />
+            <Route path="/speaker/sessions/:sessionId" element={<SpeakerSessionDetails />} />
             <Route path="/speaker/materials" element={<Materials />} />
+            <Route path="/speaker/availability" element={<Availability />} />
+            <Route path="/speaker/profile" element={<SpeakerProfile />} />
+            <Route path="/speaker/announcements" element={<SpeakerAnnouncements />} />
+            <Route path="/speaker/settings" element={<SpeakerSettings />} />
           </Route>
 
           {/* Attendee Routes */}
@@ -165,20 +183,30 @@ const AppRoutes = () => {
             <Route path="/attendee/browse" element={<BrowseEvents />} />
             <Route path="/attendee/events/:id" element={<AttendeeEventDetails />} />
             <Route path="/attendee/register/:eventId" element={<Registration />} />
+            <Route path="/attendee/registrations" element={<MyRegistrations />} />
             <Route path="/attendee/tickets" element={<MyTickets />} />
+            <Route path="/attendee/schedule" element={<MySchedule />} />
             <Route path="/attendee/sessions" element={<AttendeeMySessions />} />
+            <Route path="/attendee/notifications" element={<AttendeeNotifications />} />
             <Route path="/attendee/qr-code" element={<MyQRCode />} />
             <Route path="/attendee/recommendations" element={<Recommendations />} />
             <Route path="/attendee/feedback" element={<AttendeeFeedback />} />
+            <Route path="/attendee/settings" element={<AttendeeSettings />} />
           </Route>
 
           {/* Sponsor Routes */}
           <Route element={<RoleRoute allowedRoles={['sponsor', 'organizer', 'admin']} />}>
             <Route path="/sponsor/dashboard" element={<SponsorDashboard />} />
-            <Route path="/sponsor/profile" element={<SpeakerProfile />} />
+            <Route path="/sponsor/events" element={<SponsorEvents />} />
+            <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
+            <Route path="/sponsor/sponsorships/:sponsorshipId" element={<SponsorshipDetails />} />
+            <Route path="/sponsor/deliverables" element={<Deliverables />} />
+            <Route path="/sponsor/profile" element={<SponsorProfile />} />
+            <Route path="/sponsor/invoices" element={<PaymentsInvoices />} />
+            <Route path="/sponsor/announcements" element={<SponsorAnnouncements />} />
+            <Route path="/sponsor/settings" element={<SponsorSettings />} />
             <Route path="/sponsor/package" element={<Package />} />
             <Route path="/sponsor/brand-assets" element={<BrandAssets />} />
-            <Route path="/sponsor/deliverables" element={<Deliverables />} />
           </Route>
         </Route>
       </Route>

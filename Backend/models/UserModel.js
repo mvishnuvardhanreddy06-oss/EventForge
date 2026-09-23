@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    minlength: [8, 'Password must be at least 8 characters']
   },
   role: {
     type: String,
@@ -43,6 +43,38 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  location: {
+    type: String,
+    default: 'Hyderabad, India'
+  },
+  language: {
+    type: String,
+    default: 'English (India)'
+  },
+  timezone: {
+    type: String,
+    default: 'Asia/Kolkata (IST +5:30)'
+  },
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    eventReminders: { type: Boolean, default: true },
+    registrationUpdates: { type: Boolean, default: true },
+    paymentUpdates: { type: Boolean, default: true },
+    scheduleChanges: { type: Boolean, default: true },
+    organizerAnnouncements: { type: Boolean, default: true },
+    sessionReminders: { type: Boolean, default: true },
+    browserNotifications: { type: Boolean, default: true },
+    profileVisibility: {
+      type: String,
+      enum: ['public', 'registered_events_only', 'private'],
+      default: 'registered_events_only'
+    },
+    profileDiscovery: { type: Boolean, default: true }
+  },
+  personalSchedule: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Session'
+  }],
   isActive: {
     type: Boolean,
     default: true
@@ -65,6 +97,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.__v;
   return obj;
 };
 

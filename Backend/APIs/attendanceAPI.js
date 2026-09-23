@@ -7,13 +7,49 @@ const EventModel = require('../models/EventModel');
 const verifyToken = require('../middlewares/verifyToken');
 const verifyRole = require('../middlewares/verifyRole');
 const validateRequest = require('../middlewares/validateRequest');
+const validateObjectId = require('../middlewares/validateObjectId');
 const { emitCheckInUpdate, emitAttendanceUpdate } = require('../sockets/socket');
 const { ROLES, ATTENDANCE_METHOD } = require('../utils/constants');
+
+// Helper to check if staff/organizer is authorized for this event
+const isAuthorizedForEvent = (event, user) => {
+  if (!event || !user) return false;
+  if (user.role === ROLES.ADMIN) return true;
+  if (user.organizationId && event.organizationId && user.organizationId.toString() === event.organizationId.toString()) return true;
+  if (event.organizerId && user._id && event.organizerId.toString() === user._id.toString()) return true;
+  return false;
+};
 
 // POST /api/attendance/scan (Staff scanning QR code for event check-in)
 router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES.ADMIN), validateRequest(['qrToken', 'eventId']), async (req, res, next) => {
   try {
     const { qrToken, eventId } = req.body;
+
+    if (!require('mongoose').Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid eventId format',
+        error: { code: 'INVALID_OBJECT_ID' }
+      });
+    }
+
+    const event = await EventModel.findById(eventId);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+        error: { code: 'EVENT_NOT_FOUND' }
+      });
+    }
+
+    // Verify staff/organizer authorization for this event
+    if (!isAuthorizedForEvent(event, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to check in attendees for this event.',
+        error: { code: 'FORBIDDEN_EVENT_CHECKIN' }
+      });
+    }
 
     // Find registration with this qrToken
     const registration = await RegistrationModel.findOne({ qrToken })
@@ -100,8 +136,25 @@ router.post('/session', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, RO
   try {
     const { sessionId, attendeeId, method = ATTENDANCE_METHOD.MANUAL } = req.body;
 
+    if (!require('mongoose').Types.ObjectId.isValid(sessionId) || !require('mongoose').Types.ObjectId.isValid(attendeeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid sessionId or attendeeId format',
+        error: { code: 'INVALID_OBJECT_ID' }
+      });
+    }
+
     const session = await SessionModel.findById(sessionId);
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    const event = await EventModel.findById(session.eventId);
+    if (!isAuthorizedForEvent(event, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to record session attendance for this event.',
+        error: { code: 'FORBIDDEN_SESSION_ATTENDANCE' }
+      });
+    }
 
     // Check duplicate session attendance
     const existing = await AttendanceModel.findOne({
@@ -146,7 +199,7 @@ router.post('/session', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, RO
 });
 
 // GET /api/attendance/event/:eventId
-router.get('/event/:eventId', verifyToken, async (req, res, next) => {
+router.get('/event/:eventId', verifyToken, validateObjectId('eventId'), async (req, res, next) => {
   try {
     const { eventId } = req.params;
     const attendanceRecords = await AttendanceModel.find({ eventId, sessionId: null })
@@ -165,7 +218,7 @@ router.get('/event/:eventId', verifyToken, async (req, res, next) => {
 });
 
 // GET /api/attendance/session/:sessionId
-router.get('/session/:sessionId', verifyToken, async (req, res, next) => {
+router.get('/session/:sessionId', verifyToken, validateObjectId('sessionId'), async (req, res, next) => {
   try {
     const { sessionId } = req.params;
     const sessionAttendance = await AttendanceModel.find({ sessionId })

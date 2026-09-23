@@ -8,6 +8,7 @@ const verifyToken = require('../middlewares/verifyToken');
 const verifyRole = require('../middlewares/verifyRole');
 const verifyEventAccess = require('../middlewares/verifyEventAccess');
 const validateRequest = require('../middlewares/validateRequest');
+const validateObjectId = require('../middlewares/validateObjectId');
 const { ROLES, EVENT_STATUS } = require('../utils/constants');
 
 // GET /api/events (Public browsing & filtered dashboard views)
@@ -62,7 +63,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/events/:id
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', validateObjectId('id'), async (req, res, next) => {
   try {
     const event = await EventModel.findById(req.params.id)
       .populate('organizationId')

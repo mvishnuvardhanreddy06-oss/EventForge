@@ -20,7 +20,10 @@ import {
   Sparkles,
   QrCode,
   Compass,
-  FileText
+  FileText,
+  CalendarCheck,
+  User,
+  Bell
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -234,97 +237,392 @@ const Sidebar = () => {
     );
   }
 
-  // Default rendering for other roles (Staff, Speakers, Sponsors, Attendees)
-  const getNavItems = () => {
-    switch (user.role) {
-      case 'organizer':
-        return [
-          { label: 'Dashboard', to: '/organizer/dashboard', icon: LayoutDashboard },
-          { label: 'Events', to: '/organizer/events', icon: Calendar },
-          { label: 'Venues', to: '/organizer/venues', icon: Building2 },
-          { label: 'Sessions', to: '/organizer/sessions', icon: Clock },
-          { label: 'Speakers', to: '/organizer/speakers', icon: Mic },
-          { label: 'Sponsors', to: '/organizer/sponsors', icon: Award },
-          { label: 'Sponsorship Packages', to: '/organizer/packages', icon: PackageCheck },
-          { label: 'Tickets', to: '/organizer/tickets', icon: Ticket },
-          { label: 'Attendees', to: '/organizer/attendees', icon: Users },
-          { label: 'Announcements', to: '/organizer/announcements', icon: Megaphone },
-          { label: 'Feedback', to: '/organizer/feedback', icon: MessageSquare },
-          { label: 'Analytics', to: '/organizer/analytics', icon: BarChart3 },
-          { label: 'AI Studio', to: '/organizer/ai-studio', icon: Sparkles, highlight: true }
-        ];
-      case 'staff':
-        return [
-          { label: 'Staff Dashboard', to: '/staff/dashboard', icon: LayoutDashboard },
+  // For Speaker: Grouped Linear/Stripe style speaker sidebar
+  const currentRole = (user.role || '').toLowerCase();
+  if (currentRole === 'speaker') {
+    const speakerSections = [
+      {
+        title: 'MAIN',
+        items: [
+          { label: 'Dashboard', to: '/speaker/dashboard', icon: LayoutDashboard }
+        ]
+      },
+      {
+        title: 'EVENTS',
+        items: [
+          { label: 'My Events', to: '/speaker/events', icon: Calendar },
+          { label: 'My Sessions', to: '/speaker/sessions', icon: Clock }
+        ]
+      },
+      {
+        title: 'CONTENT',
+        items: [
+          { label: 'Presentation Materials', to: '/speaker/materials', icon: FileText }
+        ]
+      },
+      {
+        title: 'SCHEDULE',
+        items: [
+          { label: 'Availability', to: '/speaker/availability', icon: CalendarCheck }
+        ]
+      },
+      {
+        title: 'PROFILE',
+        items: [
+          { label: 'Speaker Profile', to: '/speaker/profile', icon: Mic }
+        ]
+      },
+      {
+        title: 'COMMUNICATION',
+        items: [
+          { label: 'Announcements', to: '/speaker/announcements', icon: Megaphone }
+        ]
+      },
+      {
+        title: 'ACCOUNT',
+        items: [
+          { label: 'Settings', to: '/speaker/settings', icon: Settings }
+        ]
+      }
+    ];
+
+    const getInitials = (name) => {
+      if (!name) return 'SP';
+      return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    };
+
+    return (
+      <aside className="w-[240px] bg-white border-r border-slate-200/80 hidden lg:flex flex-col shrink-0 min-h-[calc(100vh-4rem)] justify-between">
+        <div className="p-3.5 space-y-4 overflow-y-auto">
+          {speakerSections.map((sec) => (
+            <div key={sec.title}>
+              <p className="px-2.5 mb-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                {sec.title}
+              </p>
+              <div className="space-y-0.5">
+                {sec.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) =>
+                        `flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+                          isActive
+                            ? 'bg-purple-50/80 text-purple-900 border-l-[3px] border-purple-600 rounded-l-none font-bold'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-purple-600' : 'text-slate-500'}`} />
+                          <span className="truncate">{item.label}</span>
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Speaker Profile at Bottom */}
+        <div className="p-3.5 border-t border-slate-100/90 bg-slate-50/40">
+          <div className="flex items-center space-x-2.5 px-2 py-1.5 rounded-lg">
+            <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+              {getInitials(user.name)}
+            </div>
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-xs font-bold text-slate-900 truncate">{user.name || 'Keynote Speaker'}</p>
+              <p className="text-[10px] font-bold text-purple-700 uppercase tracking-wide truncate">KEYNOTE SPEAKER</p>
+              <p className="text-[10px] text-slate-400 truncate">EventForge Summit</p>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-white" title="Active Session" />
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // For Event Staff: Grouped staff sidebar
+  if (currentRole === 'staff') {
+    const staffSections = [
+      {
+        title: 'MAIN',
+        items: [
+          { label: 'Staff Dashboard', to: '/staff/dashboard', icon: LayoutDashboard }
+        ]
+      },
+      {
+        title: 'OPERATIONS',
+        items: [
           { label: 'QR Scan Check-in', to: '/staff/checkin', icon: QrCode, highlight: true },
           { label: 'Session Attendance', to: '/staff/session-attendance', icon: Clock },
           { label: 'Attendee Support', to: '/staff/support', icon: Users }
-        ];
-      case 'speaker':
-        return [
-          { label: 'Speaker Dashboard', to: '/speaker/dashboard', icon: LayoutDashboard },
-          { label: 'Speaker Profile', to: '/speaker/profile', icon: Mic },
-          { label: 'My Sessions', to: '/speaker/sessions', icon: Clock },
-          { label: 'Availability', to: '/speaker/availability', icon: Calendar },
-          { label: 'Presentation Materials', to: '/speaker/materials', icon: FileText }
-        ];
-      case 'sponsor':
-        return [
-          { label: 'Sponsor Dashboard', to: '/sponsor/dashboard', icon: LayoutDashboard },
-          { label: 'Company Profile', to: '/sponsor/profile', icon: Building2 },
-          { label: 'Sponsorship Package', to: '/sponsor/package', icon: Award },
-          { label: 'Brand Assets', to: '/sponsor/brand-assets', icon: FileText },
-          { label: 'Deliverable Tracker', to: '/sponsor/deliverables', icon: PackageCheck, highlight: true }
-        ];
-      case 'attendee':
-      default:
-        return [
-          { label: 'Attendee Dashboard', to: '/attendee/dashboard', icon: LayoutDashboard },
-          { label: 'Browse Events', to: '/attendee/browse', icon: Compass },
-          { label: 'My Tickets & Passes', to: '/attendee/tickets', icon: Ticket },
-          { label: 'My Digital QR Badge', to: '/attendee/qr-code', icon: QrCode, highlight: true },
-          { label: 'My Sessions Agenda', to: '/attendee/sessions', icon: Calendar },
-          { label: 'AI Session Recommendations', to: '/attendee/recommendations', icon: Sparkles, highlight: true },
-          { label: 'Session Feedback', to: '/attendee/feedback', icon: MessageSquare }
-        ];
+        ]
+      }
+    ];
+
+    const getStaffInitials = (name) => {
+      if (!name) return 'ES';
+      return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    };
+
+    return (
+      <aside className="w-[240px] bg-white border-r border-slate-200/80 hidden lg:flex flex-col shrink-0 min-h-[calc(100vh-4rem)] justify-between">
+        <div className="p-3.5 space-y-4 overflow-y-auto">
+          {staffSections.map((sec) => (
+            <div key={sec.title}>
+              <p className="px-2.5 mb-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                {sec.title}
+              </p>
+              <div className="space-y-0.5">
+                {sec.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) =>
+                        `flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+                          isActive
+                            ? 'bg-emerald-50/80 text-emerald-900 border-l-[3px] border-emerald-600 rounded-l-none font-bold'
+                            : item.highlight
+                            ? 'text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100/60 hover:text-emerald-900'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-600' : item.highlight ? 'text-emerald-600' : 'text-slate-500'}`} />
+                          <span className="truncate">{item.label}</span>
+                          {item.highlight && (
+                            <span className="ml-auto px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 uppercase">
+                              SCAN
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Staff Profile at Bottom */}
+        <div className="p-3.5 border-t border-slate-100/90 bg-slate-50/40">
+          <div className="flex items-center space-x-2.5 px-2 py-1.5 rounded-lg">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+              {getStaffInitials(user.name)}
+            </div>
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-xs font-bold text-slate-900 truncate">{user.name || 'Operations Staff'}</p>
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide truncate">EVENT STAFF</p>
+              <p className="text-[10px] text-slate-400 truncate">On-Site Operations</p>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-white" title="Active Duty" />
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // For Sponsor: Grouped sponsor portal sidebar
+  if (currentRole === 'sponsor') {
+    const sponsorSections = [
+      {
+        title: 'MAIN',
+        items: [
+          { label: 'Dashboard', to: '/sponsor/dashboard', icon: LayoutDashboard }
+        ]
+      },
+      {
+        title: 'EVENTS & SPONSORSHIPS',
+        items: [
+          { label: 'My Events', to: '/sponsor/events', icon: Calendar },
+          { label: 'Sponsorships', to: '/sponsor/sponsorships', icon: Award }
+        ]
+      },
+      {
+        title: 'OPERATIONS',
+        items: [
+          { label: 'Deliverables', to: '/sponsor/deliverables', icon: PackageCheck, highlight: true }
+        ]
+      },
+      {
+        title: 'ACCOUNT',
+        items: [
+          { label: 'Sponsor Profile', to: '/sponsor/profile', icon: Building2 },
+          { label: 'Payments & Invoices', to: '/sponsor/invoices', icon: CreditCard },
+          { label: 'Announcements', to: '/sponsor/announcements', icon: Megaphone },
+          { label: 'Settings', to: '/sponsor/settings', icon: Settings }
+        ]
+      }
+    ];
+
+    const getSponsorInitials = (name) => {
+      if (!name) return 'SP';
+      return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    };
+
+    return (
+      <aside className="w-[240px] bg-white border-r border-slate-200/80 hidden lg:flex flex-col shrink-0 min-h-[calc(100vh-4rem)] justify-between">
+        <div className="p-3.5 space-y-4 overflow-y-auto">
+          {sponsorSections.map((sec) => (
+            <div key={sec.title}>
+              <p className="px-2.5 mb-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                {sec.title}
+              </p>
+              <div className="space-y-0.5">
+                {sec.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) =>
+                        `flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+                          isActive
+                            ? 'bg-amber-50/80 text-amber-900 border-l-[3px] border-amber-600 rounded-l-none font-bold'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-600' : 'text-slate-500'}`} />
+                          <span className="truncate">{item.label}</span>
+                          {item.highlight && (
+                            <span className="ml-auto px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 uppercase">
+                              Active
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sponsor Profile at Bottom */}
+        <div className="p-3.5 border-t border-slate-100/90 bg-slate-50/40">
+          <div className="flex items-center space-x-2.5 px-2 py-1.5 rounded-lg">
+            <div className="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+              {getSponsorInitials(user.name)}
+            </div>
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-xs font-bold text-slate-900 truncate">{user.name || 'Corporate Partner'}</p>
+              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide truncate">OFFICIAL SPONSOR</p>
+              <p className="text-[10px] text-slate-400 truncate">Partner Portal</p>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-white" title="Active Partner" />
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // For Attendee: Grouped attendee portal sidebar
+  const attendeeSections = [
+    {
+      title: 'MAIN',
+      items: [
+        { label: 'Dashboard', to: '/attendee/dashboard', icon: LayoutDashboard },
+        { label: 'Discover Events', to: '/attendee/browse', icon: Compass }
+      ]
+    },
+    {
+      title: 'MY EVENT ACTIVITY',
+      items: [
+        { label: 'My Registrations', to: '/attendee/registrations', icon: FileText },
+        { label: 'My Tickets', to: '/attendee/tickets', icon: Ticket },
+        { label: 'My Schedule', to: '/attendee/schedule', icon: CalendarCheck },
+        { label: 'My Sessions', to: '/attendee/sessions', icon: Clock }
+      ]
+    },
+    {
+      title: 'COMMUNICATION',
+      items: [
+        { label: 'Notifications', to: '/attendee/notifications', icon: Bell }
+      ]
+    },
+    {
+      title: 'FEEDBACK',
+      items: [
+        { label: 'Feedback & Reviews', to: '/attendee/feedback', icon: MessageSquare }
+      ]
+    },
+    {
+      title: 'ACCOUNT',
+      items: [
+        { label: 'Settings', to: '/attendee/settings', icon: Settings }
+      ]
     }
+  ];
+
+  const getAttendeeInitials = (name) => {
+    if (!name) return 'AT';
+    return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   };
 
-  const navItems = getNavItems();
-
   return (
-    <aside className="w-60 bg-white border-r border-slate-200 hidden lg:block shrink-0 min-h-[calc(100vh-4rem)]">
-      <div className="p-3.5">
-        <div className="mb-3 px-2.5 py-2 bg-slate-50 rounded-lg border border-slate-100">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role Scope</p>
-          <p className="text-xs font-bold text-slate-800 capitalize">{user.role} Portal</p>
+    <aside className="w-[240px] bg-white border-r border-slate-200/80 hidden lg:flex flex-col shrink-0 min-h-[calc(100vh-4rem)] justify-between">
+      <div className="p-3.5 space-y-4 overflow-y-auto">
+        {attendeeSections.map((sec) => (
+          <div key={sec.title}>
+            <p className="px-2.5 mb-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+              {sec.title}
+            </p>
+            <div className="space-y-0.5">
+              {sec.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+                        isActive
+                          ? 'bg-blue-50/80 text-blue-900 border-l-[3px] border-blue-600 rounded-l-none font-bold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Attendee Profile at Bottom */}
+      <div className="p-3.5 border-t border-slate-100/90 bg-slate-50/40">
+        <div className="flex items-center space-x-2.5 px-2 py-1.5 rounded-lg">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+            {getAttendeeInitials(user.name)}
+          </div>
+          <div className="min-w-0 flex-1 text-left">
+            <p className="text-xs font-bold text-slate-900 truncate">{user.name || 'Event Attendee'}</p>
+            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide truncate">CONFERENCE ATTENDEE</p>
+            <p className="text-[10px] text-slate-400 truncate">Participant Portal</p>
+          </div>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-white" title="Active Badge" />
         </div>
-        <nav className="space-y-0.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : item.highlight
-                      ? 'text-blue-700 bg-blue-50/70 hover:bg-blue-100/70'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`
-                }
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-                {item.highlight && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500" />
-                )}
-              </NavLink>
-            );
-          })}
-        </nav>
       </div>
     </aside>
   );

@@ -21,6 +21,15 @@ const announcementSchema = new mongoose.Schema({
     enum: Object.values(ANNOUNCEMENT_TYPES),
     default: ANNOUNCEMENT_TYPES.GENERAL
   },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  readBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { DELIVERABLE_STATUS } = require('../utils/constants');
 
 const deliverableSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -7,9 +6,20 @@ const deliverableSchema = new mongoose.Schema({
   dueDate: { type: Date },
   status: {
     type: String,
-    enum: Object.values(DELIVERABLE_STATUS),
-    default: DELIVERABLE_STATUS.PENDING
+    enum: ['pending', 'in_progress', 'submitted', 'approved', 'changes_requested', 'completed', 'rejected'],
+    default: 'pending'
   },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  fileUrl: { type: String, default: '' },
+  fileName: { type: String, default: '' },
+  fileSize: { type: String, default: '' },
+  fileType: { type: String, default: '' },
+  feedback: { type: String, default: '' },
+  submittedAt: { type: Date, default: null },
   completedAt: { type: Date, default: null }
 });
 
@@ -33,7 +43,28 @@ const sponsorshipSchema = new mongoose.Schema({
   paymentStatus: {
     type: String,
     enum: ['unpaid', 'pending', 'paid', 'refunded'],
-    default: 'pending'
+    default: 'paid'
+  },
+  contractStatus: {
+    type: String,
+    enum: ['draft', 'active', 'completed', 'terminated'],
+    default: 'active'
+  },
+  startDate: {
+    type: Date,
+    default: Date.now
+  },
+  endDate: {
+    type: Date,
+    default: () => new Date(Date.now() + 90 * 86400000)
+  },
+  totalAmount: {
+    type: Number,
+    default: 500000
+  },
+  paidAmount: {
+    type: Number,
+    default: 500000
   },
   status: {
     type: String,
@@ -43,5 +74,8 @@ const sponsorshipSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+sponsorshipSchema.index({ sponsorId: 1 });
+sponsorshipSchema.index({ eventId: 1 });
 
 module.exports = mongoose.model('Sponsorship', sponsorshipSchema);

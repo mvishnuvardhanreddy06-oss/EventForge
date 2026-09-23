@@ -43,7 +43,8 @@ export const sessionService = {
   create: (data) => api.post('/sessions', data),
   update: (id, data) => api.put(`/sessions/${id}`, data),
   delete: (id) => api.delete(`/sessions/${id}`),
-  uploadMaterial: (id, material) => api.post(`/sessions/${id}/materials`, material)
+  uploadMaterial: (id, material) => api.post(`/sessions/${id}/materials`, material),
+  reviewMaterial: (sessionId, materialId, data) => api.patch(`/sessions/${sessionId}/materials/${materialId}/review`, data)
 };
 
 export const speakerService = {
@@ -67,7 +68,8 @@ export const sponsorshipService = {
   createPackage: (data) => api.post('/sponsorships/packages', data),
   getAll: (params) => api.get('/sponsorships', { params }),
   assignPackage: (data) => api.post('/sponsorships', data),
-  updateDeliverable: (id, deliverableId, status) => api.patch(`/sponsorships/${id}/deliverable/${deliverableId}`, { status })
+  updateDeliverable: (id, deliverableId, status) => api.patch(`/sponsorships/${id}/deliverable/${deliverableId}`, { status }),
+  reviewDeliverable: (sponsorshipId, deliverableId, data) => api.patch(`/sponsors/deliverables/${sponsorshipId}/${deliverableId}/review`, data)
 };
 
 export const ticketService = {
@@ -129,3 +131,81 @@ export const aiService = {
   getRecommendations: (eventId) => api.get(`/ai/recommendations/${eventId}`),
   updateInterests: (interests) => api.post('/ai/attendee/interests', { interests })
 };
+
+export const speakerPortalService = {
+  getDashboard: () => api.get('/speakers/me/dashboard'),
+  getEvents: (params) => api.get('/speakers/me/events', { params }),
+  getEventDetails: (id) => api.get(`/speakers/me/events/${id}`),
+  getSessions: (params) => api.get('/speakers/me/sessions', { params }),
+  getSessionDetails: (id) => api.get(`/speakers/me/sessions/${id}`),
+  confirmSession: (id) => api.post(`/speakers/me/sessions/${id}/confirm`),
+  getMaterials: () => api.get('/speakers/me/materials'),
+  uploadMaterial: (formData) => api.post('/speakers/me/materials', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteMaterial: (sessionId, materialId) => api.delete(`/speakers/me/materials/${sessionId}/${materialId}`),
+  getAvailability: () => api.get('/speakers/me/availability'),
+  updateAvailability: (data) => api.put('/speakers/me/availability', data),
+  getProfile: () => api.get('/speakers/me/profile'),
+  updateProfile: (data) => api.put('/speakers/me/profile', data),
+  getAnnouncements: (params) => api.get('/speakers/me/announcements', { params }),
+  markAnnouncementRead: (id) => api.post(`/speakers/me/announcements/${id}/read`),
+  getSettings: () => api.get('/speakers/me/settings'),
+  updateSettings: (data) => api.put('/speakers/me/settings', data),
+  changePassword: (data) => api.put('/speakers/me/password', data),
+  deleteAccount: (data) => api.delete('/speakers/me/account', { data })
+};
+
+export const sponsorPortalService = {
+  getDashboard: () => api.get('/sponsors/me/dashboard'),
+  getEvents: (params) => api.get('/sponsors/me/events', { params }),
+  getEventDetails: (id) => api.get(`/sponsors/me/events/${id}`),
+  getSponsorships: (params) => api.get('/sponsors/me/sponsorships', { params }),
+  getSponsorshipDetails: (id) => api.get(`/sponsors/me/sponsorships/${id}`),
+  getDeliverables: (params) => api.get('/sponsors/me/deliverables', { params }),
+  uploadDeliverable: (sponsorshipId, deliverableId, formData) => api.post(`/sponsors/me/deliverables/${sponsorshipId}/${deliverableId}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getProfile: () => api.get('/sponsors/me/profile'),
+  updateProfile: (data) => api.put('/sponsors/me/profile', data),
+  getInvoices: (params) => api.get('/sponsors/me/invoices', { params }),
+  getInvoiceDetails: (id) => api.get(`/sponsors/me/invoices/${id}`),
+  payInvoice: (id, data) => api.post(`/sponsors/me/invoices/${id}/pay`, data),
+  getAnnouncements: (params) => api.get('/sponsors/me/announcements', { params }),
+  markAnnouncementRead: (id) => api.post(`/sponsors/me/announcements/${id}/read`),
+  getSettings: () => api.get('/sponsors/me/settings'),
+  updateSettings: (data) => api.put('/sponsors/me/settings', data),
+  changePassword: (data) => api.put('/sponsors/me/password', data),
+  deleteAccount: (data) => api.delete('/sponsors/me/account', { data })
+};
+
+export const attendeePortalService = {
+  getDashboard: () => api.get('/attendee/dashboard'),
+  getEvents: (params) => api.get('/attendee/events', { params }),
+  getEventDetails: (id) => api.get(`/attendee/events/${id}`),
+  registerForEvent: (id, data) => api.post(`/attendee/events/${id}/register`, data),
+  getRegistrations: (params) => api.get('/attendee/registrations', { params }),
+  getRegistrationDetails: (id) => api.get(`/attendee/registrations/${id}`),
+  cancelRegistration: (id, data) => api.patch(`/attendee/registrations/${id}/cancel`, data),
+  getTickets: (params) => api.get('/attendee/tickets', { params }),
+  getTicketPass: (registrationId) => api.get(`/attendee/tickets/${registrationId}`),
+  getSchedule: (params) => api.get('/attendee/schedule', { params }),
+  addToSchedule: (sessionId) => api.post('/attendee/schedule/add', { sessionId }),
+  removeFromSchedule: (sessionId) => api.post('/attendee/schedule/remove', { sessionId }),
+  getSessions: (params) => api.get('/attendee/sessions', { params }),
+  getNotifications: (params) => api.get('/attendee/notifications', { params }),
+  markNotificationRead: (id) => api.patch(`/attendee/notifications/${id}/read`),
+  markAllNotificationsRead: () => api.patch('/attendee/notifications/read-all'),
+  submitFeedback: (data) => api.post('/attendee/feedback', data),
+  getSettings: () => api.get('/attendee/settings'),
+  updateSettings: (data) => api.put('/attendee/settings', data),
+  changePassword: (data) => api.put('/attendee/password', data),
+  deleteAccount: (data) => api.delete('/attendee/account', { data })
+};
+
+export const auditLogService = {
+  getAll: (params) => api.get('/audit-logs', { params }),
+  export: (params) => api.get('/audit-logs/export', { params })
+};
+
+
