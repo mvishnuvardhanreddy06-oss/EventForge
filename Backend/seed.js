@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const dns = require('dns');
+try { dns.setServers(['8.8.8.8', '1.1.1.1']); } catch (e) {}
 require('dotenv').config();
 
 const UserModel = require('./models/UserModel');
@@ -75,8 +77,8 @@ const seedDatabase = async () => {
       subscriptionStatus: 'active'
     });
 
-    // 2. Platform Admin
-    console.log('Creating 1 Platform Admin...');
+    // 2. Platform Admins
+    console.log('Creating Platform Admins...');
     const adminUser = await UserModel.create({
       name: 'Vishnureddy',
       email: 'mvishnuvardhanreddy33@gmail.com',
@@ -86,8 +88,17 @@ const seedDatabase = async () => {
       interests: ['Artificial Intelligence', 'Cybersecurity', 'Cloud Computing', 'Leadership']
     });
 
+    await UserModel.create({
+      name: 'EventForge Admin',
+      email: 'admin@eventforge.io',
+      password: defaultPassword,
+      role: ROLES.ADMIN,
+      phone: '+1 (555) 000-0000',
+      interests: ['Artificial Intelligence', 'Cybersecurity', 'Cloud Computing', 'Leadership']
+    });
+
     // 3. Organizers
-    console.log('Creating 3 Organizers...');
+    console.log('Creating Organizers...');
     const organizer1 = await UserModel.create({
       name: 'Elena Rostova',
       email: 'organizer@nexus.io',
@@ -115,8 +126,17 @@ const seedDatabase = async () => {
       phone: '+1 (555) 100-0003'
     });
 
-    // 4. Staff Members (5)
-    console.log('Creating 5 Staff members...');
+    await UserModel.create({
+      name: 'Apex Events Organizer',
+      email: 'organizer@apexevents.com',
+      password: defaultPassword,
+      role: ROLES.ORGANIZER,
+      organizationId: org2._id,
+      phone: '+1 (555) 100-0004'
+    });
+
+    // 4. Staff Members
+    console.log('Creating Staff members...');
     const staffMembers = [];
     const staffNames = ['David Kim', 'Jessica Patel', 'Carlos Mendoza', 'Amina Yusuf', 'Liam O Connor'];
     for (let i = 0; i < 5; i++) {
@@ -130,6 +150,15 @@ const seedDatabase = async () => {
       });
       staffMembers.push(staff);
     }
+
+    await UserModel.create({
+      name: 'David Kim (Apex Staff)',
+      email: 'staff1@apexevents.com',
+      password: defaultPassword,
+      role: ROLES.STAFF,
+      organizationId: org2._id,
+      phone: '+1 (555) 200-0010'
+    });
 
     // 5. Speakers (5)
     console.log('Creating 5 Speakers and Speaker profiles...');

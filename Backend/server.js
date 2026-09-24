@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Fail startup immediately if JWT_SECRET is missing
@@ -136,9 +137,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
+  const dbStatus = ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState] || 'unknown';
   res.status(200).json({
     success: true,
     message: 'EventForge Backend API is running smoothly',
+    database: {
+      status: dbStatus,
+      connected: mongoose.connection.readyState === 1,
+      host: mongoose.connection.host || 'none',
+      name: mongoose.connection.name || 'none'
+    },
     timestamp: new Date(),
     version: '1.0.0'
   });
