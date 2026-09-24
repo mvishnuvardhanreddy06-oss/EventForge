@@ -15,59 +15,59 @@ const RoleAnalytics = ({ roleCounts = {} }) => {
       count: roleCounts.attendee ?? 31,
       percentage: 55.4,
       icon: Ticket,
-      color: 'bg-blue-600'
+      color: 'bg-accent'
     },
     {
       role: 'Sponsor',
       count: roleCounts.sponsor ?? 11,
       percentage: 19.6,
       icon: Award,
-      color: 'bg-indigo-500'
+      color: 'bg-gold'
     },
     {
       role: 'Speaker',
       count: roleCounts.speaker ?? 5,
       percentage: 8.9,
       icon: Mic,
-      color: 'bg-sky-500'
+      color: 'bg-teal'
     },
     {
       role: 'Staff',
       count: roleCounts.staff ?? 5,
       percentage: 8.9,
       icon: ShieldCheck,
-      color: 'bg-emerald-500'
+      color: 'bg-accent/80'
     },
     {
       role: 'Organizer',
       count: roleCounts.organizer ?? 3,
       percentage: 5.4,
       icon: Building2,
-      color: 'bg-amber-500'
+      color: 'bg-gold/80'
     },
     {
       role: 'Admin',
       count: roleCounts.admin ?? 1,
       percentage: 1.8,
       icon: UserCheck,
-      color: 'bg-purple-500'
+      color: 'bg-teal/80'
     }
   ];
 
   const totalUsers = Object.values(roleCounts).reduce((acc, v) => acc + (v || 0), 0) || 56;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] min-w-0 overflow-hidden">
+    <div className="panel min-w-0 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          <h3 className="text-base font-display font-bold text-ink tracking-tight">
             Users by System Role
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             {totalUsers} users across 6 verified roles
           </p>
         </div>
-        <span className="text-xs font-semibold text-slate-400">
+        <span className="text-xs font-semibold text-muted">
           100% Account Verification
         </span>
       </div>
@@ -80,16 +80,16 @@ const RoleAnalytics = ({ roleCounts = {} }) => {
             <div key={item.role} className="space-y-1.5 min-w-0">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-2 min-w-0">
-                  <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="font-medium text-slate-700 truncate">{item.role}</span>
+                  <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
+                  <span className="font-medium text-ink truncate">{item.role}</span>
                 </div>
                 <div className="flex items-center space-x-1.5 shrink-0">
-                  <span className="font-bold text-slate-900">{item.count}</span>
-                  <span className="text-[11px] text-slate-400">({item.percentage}%)</span>
+                  <span className="font-display font-bold text-ink">{item.count}</span>
+                  <span className="text-[11px] text-muted">({item.percentage}%)</span>
                 </div>
               </div>
               {/* Horizontal Progress Bar */}
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-line rounded-full overflow-hidden">
                 <div
                   className={`h-full ${item.color} rounded-full transition-all duration-500`}
                   style={{ width: `${item.percentage}%` }}

@@ -31,14 +31,14 @@ import Pagination from '../../components/organizer/speakers/Pagination';
 import ToastNotification from '../../components/organizer/speakers/ToastNotification';
 
 const DEFAULT_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop'
+  'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/d/d6/Sundar_pichai.png',
+  'https://upload.wikimedia.org/wikipedia/commons/7/78/MS-Exec-Nadella-Satya-2017-08-31-22_%28cropped%29.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/8/80/Sam_Altman_TechCrunch_Disrupt_2019_%28cropped%29.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/0/00/Jensen_Huang_at_Computex_2024.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/1/1d/Rohit_Sharma_portrait.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/7/70/Mahendra_Singh_Dhoni_in_January_2023.jpg',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop'
 ];
 
 const INITIAL_EVENTS = [
@@ -1076,25 +1076,36 @@ const Speakers = () => {
     const loadSpeakers = async () => {
       try {
         const res = await speakerService.getAll();
-        if (res?.data?.speakers && res.data.speakers.length > 0) {
-          // Merge API data if exists, preserving the rich UI schema
-          setSpeakers((prev) => {
-            const apiItems = res.data.speakers.map((s) => ({
+        const rawSpeakers = res?.data?.speakers || res?.speakers || (Array.isArray(res?.data) ? res.data : null);
+        if (Array.isArray(rawSpeakers) && rawSpeakers.length > 0) {
+          const apiItems = rawSpeakers.map((s, idx) => {
+            const name = s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Speaker';
+            let img = s.profileImage;
+            if (/virat|kholi|kohli/i.test(name)) {
+              img = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg';
+            } else if (!img || img.includes('unsplash.com/photo-1534528741775') || img.includes('unsplash.com/photo-1500648767791')) {
+              img = DEFAULT_AVATARS[idx % DEFAULT_AVATARS.length];
+            }
+            return {
               ...s,
               id: s._id || s.id,
-              name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+              name,
+              designation: s.designation || s.title || 'Keynote Speaker',
+              company: s.company || 'Enterprise Partner',
+              email: s.email || '',
+              phone: s.phone || '',
+              profileImage: img,
+              type: s.type || 'Speaker',
               status: s.status || 'confirmed',
               availability: s.availability || 'available',
               materialStatus: s.materialStatus || 'approved',
-              sessions: s.sessions || []
-            }));
-            // If API has fewer items, preserve mock items to meet the 32 KPI target
-            return apiItems.length >= 32 ? apiItems : prev;
+              sessions: s.sessions || s.assignedSessions || []
+            };
           });
+          setSpeakers(apiItems);
         }
       } catch (err) {
-        // Fallback to local rich state without blocking user
-        console.info('Speaker API fallback active; using enterprise local roster.');
+        console.error('Error fetching speakers from database:', err);
       }
     };
     loadSpeakers();

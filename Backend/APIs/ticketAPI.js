@@ -29,7 +29,28 @@ router.get('/', async (req, res, next) => {
       query.eventId = eventId;
     }
 
-    const tickets = await TicketModel.find(query).sort({ price: 1 });
+    let tickets = await TicketModel.find(query).sort({ price: 1 });
+
+    // If querying tickets for a specific event and none exist yet, automatically provision a default delegate pass
+    if (eventId && tickets.length === 0) {
+      const event = await EventModel.findById(eventId);
+      if (event) {
+        const defaultTicket = await TicketModel.create({
+          eventId: event._id,
+          name: 'General Delegate Pass',
+          price: 0,
+          quantity: event.capacity || 1000,
+          sold: 0,
+          remaining: event.capacity || 1000,
+          saleStart: event.registrationStart || Date.now(),
+          saleEnd: event.registrationEnd || event.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          benefits: ['Full Conference Access', 'Keynotes & General Sessions', 'Digital Attendance Badge'],
+          status: 'active'
+        });
+        tickets = [defaultTicket];
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Tickets retrieved successfully',

@@ -31,19 +31,19 @@ const UpcomingSessions = () => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+    <div className="panel space-y-4">
+      <div className="flex items-center justify-between pb-2 border-b border-line">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          <h3 className="text-base font-display font-bold text-ink tracking-tight">
             Upcoming Sessions
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Key agenda presentations scheduled across tracks.
           </p>
         </div>
         <Link
           to="/organizer/sessions"
-          className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+          className="text-xs font-bold text-accent hover:underline flex items-center space-x-1"
         >
           <span>All Sessions</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -54,29 +54,29 @@ const UpcomingSessions = () => {
         {sessions.map((s, idx) => (
           <div
             key={idx}
-            className="p-3.5 bg-slate-50/70 hover:bg-slate-100/70 rounded-xl border border-slate-200/70 transition-colors flex items-start justify-between gap-3"
+            className="p-3.5 bg-bg/40 hover:bg-bg/80 rounded-xl border border-line transition-colors flex items-start justify-between gap-3"
           >
             <div className="flex items-start space-x-3 min-w-0">
-              <div className="w-14 h-11 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-700 flex flex-col items-center justify-center shrink-0">
-                <Clock className="w-3 h-3 text-blue-500 mb-0.5" />
+              <div className="w-14 h-11 rounded-lg bg-surface border border-line text-accent flex flex-col items-center justify-center shrink-0">
+                <Clock className="w-3 h-3 text-accent mb-0.5" />
                 <span className="font-mono font-bold text-[10px] leading-none">{s.time}</span>
               </div>
               <div className="min-w-0 space-y-0.5">
-                <h4 className="text-xs font-bold text-slate-900 truncate">
+                <h4 className="text-xs font-display font-bold text-ink truncate">
                   {s.title}
                 </h4>
-                <p className="text-[11px] text-slate-500 truncate">
-                  {s.event} · <span className="font-medium text-slate-700">{s.room}</span>
+                <p className="text-[11px] text-muted truncate">
+                  {s.event} · <span className="font-medium text-ink">{s.room}</span>
                 </p>
-                <div className="flex items-center space-x-1.5 text-[11px] text-slate-600 pt-0.5">
-                  <User className="w-3 h-3 text-slate-400" />
-                  <span>Speaker: <strong>{s.speaker}</strong></span>
+                <div className="flex items-center space-x-1.5 text-[11px] text-muted pt-0.5">
+                  <User className="w-3 h-3 text-muted" />
+                  <span>Speaker: <strong className="text-ink">{s.speaker}</strong></span>
                 </div>
               </div>
             </div>
 
-            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <span className="chip !py-0.5 !px-2 text-[10px] shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               <span>{s.badge}</span>
             </span>
           </div>

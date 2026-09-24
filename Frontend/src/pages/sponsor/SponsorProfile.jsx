@@ -62,8 +62,8 @@ const SponsorProfile = () => {
     const fetchProfile = async () => {
       try {
         const res = await sponsorPortalService.getProfile();
-        if (res.data?.success && res.data.data.sponsor) {
-          const sp = res.data.data.sponsor;
+        const sp = res?.data?.sponsor || res?.sponsor || res?.data;
+        if (sp) {
           setProfile({
             companyName: sp.companyName || '',
             website: sp.website || '',
@@ -128,10 +128,10 @@ const SponsorProfile = () => {
 
     try {
       const res = await sponsorPortalService.updateProfile(profile);
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setMessage({ type: 'success', text: 'Corporate sponsor profile updated successfully!' });
       } else {
-        setMessage({ type: 'error', text: res.data?.message || 'Failed to update profile.' });
+        setMessage({ type: 'error', text: res?.message || res?.data?.message || 'Failed to update profile.' });
       }
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || err.message || 'Error updating profile.' });

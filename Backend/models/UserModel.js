@@ -75,6 +75,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Session'
   }],
+  assignedEvents: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Event'
+  }],
   isActive: {
     type: Boolean,
     default: true

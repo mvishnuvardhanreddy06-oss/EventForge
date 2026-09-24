@@ -22,9 +22,8 @@ const SponsorAnnouncements = () => {
   const fetchAnnouncements = async () => {
     try {
       const res = await sponsorPortalService.getAnnouncements();
-      if (res.data?.success) {
-        setAnnouncements(res.data.data.announcements || []);
-      }
+      const list = res?.data?.announcements || res?.announcements || [];
+      setAnnouncements(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Failed to fetch sponsor announcements:', err);
     } finally {

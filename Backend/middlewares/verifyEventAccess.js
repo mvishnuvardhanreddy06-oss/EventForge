@@ -52,14 +52,15 @@ const verifyEventAccess = async (req, res, next) => {
       return next();
     }
 
-    // Staff access verification: must belong to event's host organization
+    // Staff access verification: must be explicitly assigned to this event
     if (req.user.role === ROLES.STAFF) {
-      const isOrgMember = event.organizationId && req.user.organizationId && event.organizationId.toString() === req.user.organizationId.toString();
-      if (!isOrgMember) {
+      const isAssigned = (event.assignedStaff && event.assignedStaff.some(id => id.toString() === req.user._id.toString())) ||
+                         (req.user.assignedEvents && req.user.assignedEvents.some(id => id.toString() === event._id.toString()));
+      if (!isAssigned) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied. You are not assigned to this event organization.',
-          error: { code: 'UNAUTHORIZED_EVENT_ACCESS' }
+          message: 'Access denied. You are not assigned to this event.',
+          error: { code: 'STAFF_NOT_ASSIGNED_TO_EVENT' }
         });
       }
       req.event = event;

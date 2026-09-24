@@ -17,7 +17,7 @@ import SpeakerStatusBadge from './SpeakerStatusBadge';
 import MaterialStatusBadge from './MaterialStatusBadge';
 import AvailabilityBadge from './AvailabilityBadge';
 
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop';
+const DEFAULT_AVATAR = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg';
 
 const SpeakerCard = ({
   speaker,
@@ -41,7 +41,10 @@ const SpeakerCard = ({
   }, [isMenuOpen]);
 
   const fullName = speaker.name || `${speaker.firstName || ''} ${speaker.lastName || ''}`.trim();
-  const avatar = speaker.profileImage || speaker.avatar || DEFAULT_AVATAR;
+  const isVirat = /virat|kholi|kohli/i.test(fullName);
+  const avatar = isVirat
+    ? 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg'
+    : (speaker.profileImage || speaker.avatar || DEFAULT_AVATAR);
   const assignedSessions = speaker.sessions || speaker.assignedSessions || [];
   const primarySession = assignedSessions.length > 0 ? assignedSessions[0] : null;
 
@@ -57,6 +60,7 @@ const SpeakerCard = ({
                 src={avatar}
                 alt={fullName}
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = DEFAULT_AVATAR;

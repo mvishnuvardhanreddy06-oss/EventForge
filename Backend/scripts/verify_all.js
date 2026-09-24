@@ -42,7 +42,7 @@ const runVerification = async () => {
   console.log('\n--- 2. Testing Sponsor Portal Integration ---');
   const sponsorUser = loadedUsers['SPONSOR'];
   const sponsorProfile = await SponsorModel.findOne({ userId: sponsorUser._id });
-  console.log(`✓ Sponsor Model found for ${sponsorUser.name}: Company="${sponsorProfile?.companyName}", Tier="${sponsorProfile?.tier}"`);
+  console.log(`✓ Sponsor Model found for ${sponsorUser.name}: Company="${sponsorProfile?.companyName}"`);
 
   const sponsorships = await SponsorshipModel.find({ sponsorId: sponsorProfile._id }).populate('deliverables');
   console.log(`✓ Active Sponsorships count: ${sponsorships.length}`);
@@ -50,7 +50,7 @@ const runVerification = async () => {
     const firstSponsorship = sponsorships[0];
     console.log(`  - Package ID: ${firstSponsorship.packageId}`);
     console.log(`  - Deliverables count: ${firstSponsorship.deliverables.length}`);
-    console.log(`  - First deliverable: "${firstSponsorship.deliverables[0]?.name}", Status: "${firstSponsorship.deliverables[0]?.status}"`);
+    console.log(`  - First deliverable: "${firstSponsorship.deliverables[0]?.title}", Status: "${firstSponsorship.deliverables[0]?.status}"`);
   }
 
   // 3. Verify Attendee Indian Phone & Personal Schedule

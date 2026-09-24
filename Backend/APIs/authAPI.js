@@ -9,19 +9,18 @@ const validateRequest = require('../middlewares/validateRequest');
 const { ROLES } = require('../utils/constants');
 const validateObjectId = require('../middlewares/validateObjectId');
 
-const ALLOWED_REGISTRATION_ROLES = [ROLES.ATTENDEE, ROLES.ORGANIZER, ROLES.SPEAKER, ROLES.SPONSOR];
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 // POST /api/auth/register
 router.post('/register', validateRequest(['name', 'email', 'password']), async (req, res, next) => {
   try {
-    const { name, email, password, role = ROLES.ATTENDEE, organizationId, phone, interests } = req.body;
+    const { name, email, password, role, phone, interests } = req.body;
 
-    // Privilege escalation prevention: strictly block admin or staff self-registration
-    if (role && !ALLOWED_REGISTRATION_ROLES.includes(role)) {
+    // Public self-registration is strictly restricted to ATTENDEE only
+    if (role && role !== ROLES.ATTENDEE) {
       return res.status(403).json({
         success: false,
-        message: 'Registration with elevated roles (Admin, Staff) is prohibited.',
+        message: 'Public self-registration is restricted to attendees only. Elevated roles (Admin, Organizer, Staff, Speaker, Sponsor) require administrative provisioning.',
         error: { code: 'FORBIDDEN_ROLE_REGISTRATION', attemptedRole: role }
       });
     }
@@ -44,23 +43,13 @@ router.post('/register', validateRequest(['name', 'email', 'password']), async (
       });
     }
 
-    // If organizer and organizationId not provided, create a default organization if requested
-    let finalOrgId = organizationId || null;
-    if (role === ROLES.ORGANIZER && !finalOrgId && req.body.organizationName) {
-      const org = await OrganizationModel.create({
-        name: req.body.organizationName,
-        email: email.toLowerCase(),
-        description: req.body.organizationDescription || 'Corporate Event Enterprise'
-      });
-      finalOrgId = org._id;
-    }
-
+    // Always create as ATTENDEE, never assign organizationId from public registration
     const user = await UserModel.create({
       name,
       email: email.toLowerCase(),
       password,
-      role,
-      organizationId: finalOrgId,
+      role: ROLES.ATTENDEE,
+      organizationId: null,
       phone: phone || '',
       interests: Array.isArray(interests) ? interests : ['Technology', 'Artificial Intelligence', 'Business']
     });
@@ -128,9 +117,10 @@ router.post('/login', validateRequest(['email', 'password']), async (req, res, n
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  res.clearCookie('token');
   res.status(200).json({
     success: true,
-    message: 'Logged out successfully',
+    message: 'Logged out successfully. Client session tokens cleared.',
     data: {}
   });
 });
@@ -174,16 +164,34 @@ router.put('/profile', verifyToken, async (req, res, next) => {
 });
 
 // GET /api/auth/users (admin or organizer listing team/users)
-router.get('/users', verifyToken, async (req, res, next) => {
+router.get('/users', verifyToken, verifyRole(ROLES.ADMIN, ROLES.ORGANIZER), async (req, res, next) => {
   try {
-    const { role, organizationId, search } = req.query;
+    const { role, search } = req.query;
     const query = {};
 
-    if (role) query.role = role;
-    if (organizationId) query.organizationId = organizationId;
-    if (req.user.role === ROLES.ORGANIZER && req.user.organizationId) {
+    if (req.user.role === ROLES.ORGANIZER) {
+      if (!req.user.organizationId) {
+        return res.status(200).json({
+          success: true,
+          message: 'Users fetched successfully',
+          data: { users: [] }
+        });
+      }
+      // Force organizationId strictly from authenticated user's organization - never from query!
       query.organizationId = req.user.organizationId;
+      // Organizer can only query roles pertinent to their organization
+      if (role && [ROLES.STAFF, ROLES.SPEAKER, ROLES.ORGANIZER].includes(role)) {
+        query.role = role;
+      } else if (!role) {
+        query.role = { $in: [ROLES.STAFF, ROLES.SPEAKER, ROLES.ORGANIZER] };
+      }
+    } else if (req.user.role === ROLES.ADMIN) {
+      if (req.query.organizationId) {
+        query.organizationId = req.query.organizationId;
+      }
+      if (role) query.role = role;
     }
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },

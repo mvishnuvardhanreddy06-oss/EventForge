@@ -37,259 +37,75 @@ import ToastNotification from '../../components/organizer/attendees/ToastNotific
 import Loader from '../../components/Loader';
 import { formatIndianPhone } from '../../utils/phoneUtils';
 
-const MOCK_EVENTS = [
-  { _id: 'evt-1', title: 'Global Tech Leadership Summit 2026' },
-  { _id: 'evt-2', title: 'AI & Cloud Innovation Conference' },
-  { _id: 'evt-3', title: 'FinTech Future Forum' }
-];
-
-const INITIAL_ATTENDEES = [
-  {
-    _id: 'att-101',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah@example.com',
-    phone: '+919876543210',
-    profileImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop',
-    company: 'TechNova Technologies',
-    designation: 'Senior Product Manager',
-    city: 'Bengaluru',
-    country: 'India',
-    ticketType: 'VIP',
-    ticketId: 'EVF-VIP-002481',
-    registrationId: 'REG-2026-002481',
-    registrationStatus: 'confirmed',
-    paymentStatus: 'paid',
-    amountPaid: 4999,
-    dietaryPreference: 'Vegetarian',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-12T09:30:00Z',
-    registeredAtFormatted: 'Sep 12, 2026',
-    checkedIn: true,
-    checkInTime: '08:42 AM',
-    checkInDate: 'Sep 24, 2026',
-    checkedInBy: 'Gate Staff 1',
-    interests: 'AI Ethics, Product Strategy, Cloud Governance',
-    notes: 'Keynote panel attendee'
-  },
-  {
-    _id: 'att-102',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Rahul',
-    lastName: 'Sharma',
-    email: 'rahul.sharma@cloudsystems.in',
-    phone: '+919812345678',
-    profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop',
-    company: 'CloudSystems India',
-    designation: 'Principal Solutions Architect',
-    city: 'Hyderabad',
-    country: 'India',
-    ticketType: 'Standard',
-    ticketId: 'EVF-STD-002482',
-    registrationId: 'REG-2026-002482',
-    registrationStatus: 'confirmed',
-    paymentStatus: 'paid',
-    amountPaid: 2999,
-    dietaryPreference: 'Standard / No Restrictions',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-13T11:20:00Z',
-    registeredAtFormatted: 'Sep 13, 2026',
-    checkedIn: false,
-    checkInTime: null,
-    checkInDate: null,
-    checkedInBy: null,
-    interests: 'Distributed Systems, Kubernetes, Service Mesh'
-  },
-  {
-    _id: 'att-103',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Aarav',
-    lastName: 'Patel',
-    email: 'aarav.patel@finscale.org',
-    phone: '+919898765432',
-    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop',
-    company: 'FinScale Innovations',
-    designation: 'VP of Product Engineering',
-    city: 'Mumbai',
-    country: 'India',
-    ticketType: 'Corporate',
-    ticketId: 'EVF-CRP-002483',
-    registrationId: 'REG-2026-002483',
-    registrationStatus: 'pending',
-    paymentStatus: 'pending',
-    amountPaid: 7999,
-    dietaryPreference: 'Jain Vegetarian',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-18T14:45:00Z',
-    registeredAtFormatted: 'Sep 18, 2026',
-    checkedIn: false,
-    checkInTime: null,
-    checkInDate: null,
-    checkedInBy: null,
-    notes: 'Corporate delegation lead'
-  },
-  {
-    _id: 'att-104',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Priya',
-    lastName: 'Nair',
-    email: 'priya.nair@datadrive.ai',
-    phone: '+919845012345',
-    profileImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop',
-    company: 'DataDrive AI',
-    designation: 'Head of Machine Learning',
-    city: 'Chennai',
-    country: 'India',
-    ticketType: 'VIP',
-    ticketId: 'EVF-VIP-002484',
-    registrationId: 'REG-2026-002484',
-    registrationStatus: 'confirmed',
-    paymentStatus: 'paid',
-    amountPaid: 4999,
-    dietaryPreference: 'Vegan',
-    accessibilityRequirements: 'Wheelchair access',
-    registeredAt: '2026-09-14T10:15:00Z',
-    registeredAtFormatted: 'Sep 14, 2026',
-    checkedIn: true,
-    checkInTime: '09:05 AM',
-    checkInDate: 'Sep 24, 2026',
-    checkedInBy: 'Gate Staff 2',
-    interests: 'Large Language Models, MLOps'
-  },
-  {
-    _id: 'att-105',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Karan',
-    lastName: 'Mehta',
-    email: 'karan.mehta@nexgen.io',
-    phone: '+919823456789',
-    profileImage: null,
-    company: 'NexGen Digital',
-    designation: 'Security Researcher',
-    city: 'Pune',
-    country: 'India',
-    ticketType: 'Early Bird',
-    ticketId: 'EVF-EBD-002485',
-    registrationId: 'REG-2026-002485',
-    registrationStatus: 'waitlisted',
-    waitlistPosition: 12,
-    paymentStatus: 'pending',
-    amountPaid: 1999,
-    dietaryPreference: 'Standard / No Restrictions',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-19T16:10:00Z',
-    registeredAtFormatted: 'Sep 19, 2026',
-    checkedIn: false,
-    checkInTime: null,
-    checkInDate: null,
-    checkedInBy: null
-  },
-  {
-    _id: 'att-106',
-    organizationId: 'org-apex',
-    eventId: 'evt-2',
-    eventTitle: 'AI & Cloud Innovation Conference',
-    firstName: 'Divya',
-    lastName: 'Ranganathan',
-    email: 'divya.r@quantumai.tech',
-    phone: '+919834567890',
-    profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop',
-    company: 'QuantumAI Labs',
-    designation: 'Staff AI Engineer',
-    city: 'Bengaluru',
-    country: 'India',
-    ticketType: 'VIP',
-    ticketId: 'EVF-VIP-002486',
-    registrationId: 'REG-2026-002486',
-    registrationStatus: 'confirmed',
-    paymentStatus: 'paid',
-    amountPaid: 4999,
-    dietaryPreference: 'Vegetarian',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-15T08:00:00Z',
-    registeredAtFormatted: 'Sep 15, 2026',
-    checkedIn: true,
-    checkInTime: '08:15 AM',
-    checkInDate: 'Sep 24, 2026',
-    checkedInBy: 'Gate Staff 1'
-  },
-  {
-    _id: 'att-107',
-    organizationId: 'org-apex',
-    eventId: 'evt-3',
-    eventTitle: 'FinTech Future Forum',
-    firstName: 'Siddharth',
-    lastName: 'Kapoor',
-    email: 'siddharth@payvault.in',
-    phone: '+919867012345',
-    profileImage: null,
-    company: 'PayVault Payments',
-    designation: 'Chief Compliance Officer',
-    city: 'New Delhi',
-    country: 'India',
-    ticketType: 'Corporate',
-    ticketId: 'EVF-CRP-002487',
-    registrationId: 'REG-2026-002487',
-    registrationStatus: 'rejected',
-    paymentStatus: 'refunded',
-    amountPaid: 7999,
-    dietaryPreference: 'Standard / No Restrictions',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-10T12:00:00Z',
-    registeredAtFormatted: 'Sep 10, 2026',
-    checkedIn: false,
-    checkInTime: null,
-    checkInDate: null,
-    checkedInBy: null,
-    notes: 'Rejection reason: Corporate domain verification failure'
-  },
-  {
-    _id: 'att-108',
-    organizationId: 'org-apex',
-    eventId: 'evt-1',
-    eventTitle: 'Global Tech Leadership Summit 2026',
-    firstName: 'Meera',
-    lastName: 'Iyer',
-    email: 'meera.iyer@uni-edu.ac.in',
-    phone: '+919876098765',
-    profileImage: null,
-    company: 'Indian Institute of Science',
-    designation: 'Research Scholar',
-    city: 'Bengaluru',
-    country: 'India',
-    ticketType: 'Student',
-    ticketId: 'EVF-STU-002488',
-    registrationId: 'REG-2026-002488',
-    registrationStatus: 'confirmed',
-    paymentStatus: 'paid',
-    amountPaid: 999,
-    dietaryPreference: 'Vegetarian',
-    accessibilityRequirements: 'None',
-    registeredAt: '2026-09-16T15:20:00Z',
-    registeredAtFormatted: 'Sep 16, 2026',
-    checkedIn: false,
-    checkInTime: null,
-    checkInDate: null,
-    checkedInBy: null
-  }
-];
-
 const Attendees = () => {
-  const [attendees, setAttendees] = useState(INITIAL_ATTENDEES);
-  const [events, setEvents] = useState(MOCK_EVENTS);
+  const [attendees, setAttendees] = useState([]);
+  const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real events and attendees from database
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [evRes, regRes] = await Promise.allSettled([
+        eventService.getAll(),
+        registrationService.getAll(selectedEventId !== 'all' ? { eventId: selectedEventId } : {})
+      ]);
+
+      if (evRes.status === 'fulfilled') {
+        const evList = evRes.value?.data?.events || evRes.value?.events || [];
+        if (Array.isArray(evList)) {
+          setEvents(evList);
+        }
+      }
+
+      if (regRes.status === 'fulfilled') {
+        const regList = regRes.value?.data?.registrations || regRes.value?.registrations || [];
+        if (Array.isArray(regList)) {
+          setAttendees(regList.map(r => {
+            const nameParts = (r.attendeeId?.name || 'Attendee Guest').split(' ');
+            return {
+              _id: r._id,
+              organizationId: r.eventId?.organizationId || '',
+              eventId: r.eventId?._id || r.eventId,
+              eventTitle: r.eventId?.title || 'Corporate Event',
+              firstName: nameParts[0] || 'Attendee',
+              lastName: nameParts.slice(1).join(' ') || '',
+              email: r.attendeeId?.email || '',
+              phone: r.attendeeId?.phone || '+91 98765 43210',
+              profileImage: r.attendeeId?.profileImage || '',
+              company: r.attendeeId?.company || 'Organization',
+              designation: r.attendeeId?.designation || 'Participant',
+              city: r.attendeeId?.city || 'Hyderabad',
+              country: 'India',
+              ticketType: r.ticketId?.name || 'Standard Pass',
+              ticketId: r.ticketId?._id ? `TCK-${String(r.ticketId._id).slice(-6).toUpperCase()}` : `TCK-${String(r._id).slice(-6).toUpperCase()}`,
+              registrationId: `REG-${String(r._id).slice(-6).toUpperCase()}`,
+              registrationStatus: r.status || 'confirmed',
+              paymentStatus: r.paymentStatus || 'paid',
+              amountPaid: r.ticketId?.price || 0,
+              registeredAt: r.createdAt,
+              registeredAtFormatted: new Date(r.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              checkedIn: Boolean(r.checkedIn),
+              checkInTime: r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+              checkInDate: r.checkInTime ? new Date(r.checkInTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null,
+              checkedInBy: r.checkedIn ? 'Staff Check-In' : null,
+              interests: 'Technology, Networking',
+              notes: ''
+            };
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load attendees data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [selectedEventId]);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -419,11 +235,13 @@ const Attendees = () => {
 
   // Statistics calculation for 5 Summary Cards
   const stats = useMemo(() => {
-    const total = 1240;
-    const confirmed = 1180;
-    const pending = 35;
-    const checkedIn = 860;
-    const paymentsPending = 125000;
+    const total = attendees.length;
+    const confirmed = attendees.filter((a) => a.registrationStatus === 'confirmed').length;
+    const pending = attendees.filter((a) => a.registrationStatus === 'pending').length;
+    const checkedIn = attendees.filter((a) => a.checkedIn).length;
+    const paymentsPending = attendees
+      .filter((a) => a.paymentStatus === 'pending')
+      .reduce((sum, a) => sum + (a.amountPaid || 0), 0);
 
     return {
       total,
@@ -431,9 +249,9 @@ const Attendees = () => {
       pending,
       checkedIn,
       paymentsPending,
-      paymentsPendingFormatted: '₹1,25,000'
+      paymentsPendingFormatted: `₹${paymentsPending.toLocaleString('en-IN')}`
     };
-  }, []);
+  }, [attendees]);
 
   // Selection handlers
   const handleSelectAll = () => {

@@ -37,9 +37,15 @@ const SponsorDetailsDrawer = ({
           <div className="px-6 py-5 bg-slate-50 border-b border-slate-200/80 shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center space-x-3.5 min-w-0">
-                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-2.5 shrink-0 shadow-xs">
+                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-2.5 shrink-0 shadow-xs overflow-hidden">
                   {sponsor.logo ? (
-                    <img src={sponsor.logo} alt={sponsor.companyName} className="max-h-full max-w-full object-contain" />
+                    <img
+                      src={sponsor.logo}
+                      alt={sponsor.companyName}
+                      referrerPolicy="no-referrer"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
                   ) : (
                     <span className="font-black text-base text-blue-600">
                       {sponsor.companyName?.substring(0, 2).toUpperCase()}

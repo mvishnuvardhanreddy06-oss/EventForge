@@ -22,11 +22,30 @@ router.get('/', verifyToken, async (req, res, next) => {
     // Attendees only see their own registrations
     if (req.user.role === ROLES.ATTENDEE) {
       query.attendeeId = req.user._id;
-    } else {
+    } else if (req.user.role === ROLES.ORGANIZER) {
+      const orgEvents = await EventModel.find({
+        $or: [
+          { organizationId: req.user.organizationId },
+          { organizerId: req.user._id }
+        ]
+      }).select('_id');
+      const eventIds = orgEvents.map(e => e._id);
+      if (eventId) {
+        if (!eventIds.some(id => id.toString() === eventId.toString())) {
+          return res.status(403).json({ success: false, message: 'Forbidden: You do not manage this event' });
+        }
+        query.eventId = eventId;
+      } else {
+        query.eventId = { $in: eventIds };
+      }
       if (attendeeId) query.attendeeId = attendeeId;
+    } else if (req.user.role === ROLES.ADMIN) {
+      if (eventId) query.eventId = eventId;
+      if (attendeeId) query.attendeeId = attendeeId;
+    } else {
+      return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions to view registrations' });
     }
 
-    if (eventId) query.eventId = eventId;
     if (status) query.status = status;
 
     const registrations = await RegistrationModel.find(query)
@@ -62,6 +81,18 @@ router.get('/:id', verifyToken, async (req, res, next) => {
     // Security check: attendee can only access own registration
     if (req.user.role === ROLES.ATTENDEE && registration.attendeeId._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Forbidden: Access denied to this registration' });
+    }
+
+    // Security check: organizer can only view registrations for their own organization's events
+    if (req.user.role === ROLES.ORGANIZER) {
+      const event = await EventModel.findById(registration.eventId);
+      const isOwner = event && (
+        (event.organizationId && req.user.organizationId && event.organizationId.toString() === req.user.organizationId.toString()) ||
+        (event.organizerId && event.organizerId.toString() === req.user._id.toString())
+      );
+      if (!isOwner) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied to this registration' });
+      }
     }
 
     res.status(200).json({
@@ -151,13 +182,17 @@ router.post('/', verifyToken, validateRequest(['eventId', 'ticketId']), async (r
     const qrToken = generateQRToken(regNum, eventId, attendeeId);
     const qrCodeUrl = await createRegistrationQR(qrToken, regNum, event.title);
 
+    const isFree = finalAmount === 0;
+    const paymentStatus = isFree ? 'free' : 'pending';
+    const regStatus = isFree ? status : (status === REGISTRATION_STATUS.WAITLISTED ? REGISTRATION_STATUS.WAITLISTED : REGISTRATION_STATUS.PENDING);
+
     const registration = await RegistrationModel.create({
       eventId,
       attendeeId,
       ticketId,
       registrationNumber: regNum,
-      status,
-      paymentStatus: finalAmount === 0 ? 'free' : 'paid',
+      status: regStatus,
+      paymentStatus,
       couponId,
       finalAmount,
       qrToken,
@@ -165,8 +200,8 @@ router.post('/', verifyToken, validateRequest(['eventId', 'ticketId']), async (r
       selectedSessions
     });
 
-    // Update ticket count if confirmed
-    if (status === REGISTRATION_STATUS.CONFIRMED) {
+    // Update ticket count only if confirmed
+    if (regStatus === REGISTRATION_STATUS.CONFIRMED) {
       ticket.sold += 1;
       ticket.remaining = Math.max(0, ticket.quantity - ticket.sold);
       if (ticket.remaining === 0) ticket.status = 'sold_out';

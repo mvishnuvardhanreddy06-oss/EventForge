@@ -26,9 +26,8 @@ const MySessions = () => {
     const fetchSessions = async () => {
       try {
         const res = await attendeePortalService.getSessions();
-        if (res.data?.success) {
-          setSessions(res.data.data.sessions || []);
-        }
+        const list = res?.data?.sessions || res?.sessions || res?.data?.data?.sessions || [];
+        setSessions(list);
       } catch (err) {
         console.error('Failed to load attendee sessions:', err);
       } finally {

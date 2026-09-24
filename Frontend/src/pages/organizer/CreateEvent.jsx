@@ -210,6 +210,10 @@ const CreateEvent = () => {
   const handleConfirmPublish = async () => {
     try {
       // Structure payload for backend API
+      const location = formData.venueType === 'Online'
+        ? (formData.streamingUrl || 'Online')
+        : [formData.venueName, formData.city, formData.country].filter(Boolean).join(', ');
+
       const payload = {
         title: formData.eventName,
         description: formData.fullDescription || formData.shortDescription,
@@ -218,23 +222,27 @@ const CreateEvent = () => {
         capacity: Number(formData.capacity) || 1500,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        venueId: formData.venueId || undefined,
+        location: location || undefined,
         status: 'published',
-        tags: [formData.category, formData.eventType]
+        tags: [formData.category, formData.eventType].filter(Boolean),
+        tickets: formData.tickets || []
       };
       const res = await eventService.create(payload);
-      const newId = res?.data?.event?._id || `evt-${Date.now()}`;
+      const newId = res?.data?.event?._id || res?.event?._id;
       setPublishModalOpen(false);
       setToastMessage('✓ Event published successfully.');
       setTimeout(() => {
-        navigate(`/organizer/events/${newId}`);
+        if (newId) {
+          navigate(`/organizer/events/${newId}`);
+        } else {
+          navigate('/organizer/events');
+        }
       }, 1000);
     } catch (e) {
-      // Fallback in case of mock/offline backend
       setPublishModalOpen(false);
-      setToastMessage('✓ Event published successfully.');
-      setTimeout(() => {
-        navigate('/organizer/events');
-      }, 1000);
+      const serverMsg = e?.response?.data?.message;
+      setToastMessage(serverMsg || e?.message || 'Failed to publish event. Please check required fields.');
     }
   };
 

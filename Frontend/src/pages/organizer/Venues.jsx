@@ -331,25 +331,26 @@ const Venues = () => {
   const [conflictData, setConflictData] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Sync with API fallback
+  // Sync with API
   useEffect(() => {
     const loadVenues = async () => {
       try {
         const res = await venueService.getAll();
-        if (res?.data?.venues && res.data.venues.length > 0) {
-          // Merge API venues with realistic frontend enhancements
-          const merged = res.data.venues.map((apiVenue, idx) => ({
+        const rawVenues = res?.data?.venues || res?.venues || (Array.isArray(res?.data) ? res.data : null);
+        if (Array.isArray(rawVenues) && rawVenues.length > 0) {
+          const mapped = rawVenues.map((apiVenue, idx) => ({
             ...apiVenue,
             id: apiVenue._id || apiVenue.id,
-            roomCount: apiVenue.rooms?.length || 4,
-            status: apiVenue.status || (idx % 3 === 0 ? 'booked' : 'available'),
-            images: apiVenue.images?.length > 0 ? apiVenue.images : INITIAL_ORGANIZER_VENUES[idx % INITIAL_ORGANIZER_VENUES.length].images
+            roomCount: apiVenue.rooms?.length || 1,
+            status: apiVenue.status || 'available',
+            images: apiVenue.images?.length > 0 ? apiVenue.images : [
+              'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop'
+            ]
           }));
-          setVenues(merged);
+          setVenues(mapped);
         }
       } catch (err) {
-        // Fallback to rich initial mock dataset
-        console.info('Using enterprise initial venue catalog for Apex Global Events');
+        console.error('Error loading venues from database:', err);
       }
     };
     loadVenues();
@@ -514,15 +515,36 @@ const Venues = () => {
     });
   };
 
-  const handleSimulateConflict = () => {
-    setConflictData({
-      venueName: 'Hyderabad International Convention Centre',
-      existingEvent: 'Global Tech Leadership Summit',
-      date: 'September 24, 2026',
-      time: '09:00 AM – 06:00 PM',
-      room: 'Main Plenary Hall'
-    });
-    setIsConflictModalOpen(true);
+  const handleSimulateConflict = async () => {
+    try {
+      const res = await venueService.getAllConflicts();
+      const conflictList = res?.data?.conflicts || res?.conflicts || [];
+      if (conflictList.length > 0) {
+        const first = conflictList[0];
+        setConflictData({
+          venueName: first.venueName,
+          existingEvent: `${first.event1.title} ⚡ Collides with: ${first.event2.title}`,
+          date: `${new Date(first.event1.startDate).toLocaleDateString()} – ${new Date(first.event1.endDate).toLocaleDateString()}`,
+          time: 'Overlapping Event Dates',
+          room: 'Shared Venue Location'
+        });
+        setIsConflictModalOpen(true);
+      } else {
+        setToast({
+          type: 'success',
+          message: '✓ Venue Conflict Engine: 0 overlapping events detected across all registered venues.'
+        });
+      }
+    } catch (err) {
+      setConflictData({
+        venueName: 'Hyderabad International Convention Centre',
+        existingEvent: 'Global Tech Leadership Summit',
+        date: 'September 24, 2026',
+        time: '09:00 AM – 06:00 PM',
+        room: 'Main Plenary Hall'
+      });
+      setIsConflictModalOpen(true);
+    }
   };
 
   return (

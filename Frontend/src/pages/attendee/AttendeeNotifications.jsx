@@ -22,9 +22,8 @@ const AttendeeNotifications = () => {
   const fetchNotifications = async () => {
     try {
       const res = await attendeePortalService.getNotifications();
-      if (res.data?.success) {
-        setNotifications(res.data.data.notifications || []);
-      }
+      const list = res?.data?.notifications || res?.notifications || res?.data?.data?.notifications || [];
+      setNotifications(list);
     } catch (err) {
       console.error('Failed to load notifications:', err);
     } finally {

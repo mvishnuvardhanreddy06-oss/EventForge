@@ -22,10 +22,10 @@ const AttentionRequired = () => {
   ];
 
   return (
-    <div className="bg-amber-50/40 rounded-2xl border border-amber-200/80 p-5 sm:p-6 shadow-2xs space-y-3.5">
-      <div className="flex items-center space-x-2 text-amber-800">
-        <AlertTriangle className="w-4 h-4 text-amber-600" />
-        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider">
+    <div className="panel !bg-gold/10 border-gold/30 space-y-3.5">
+      <div className="flex items-center space-x-2 text-gold">
+        <AlertTriangle className="w-4 h-4 text-gold" />
+        <h3 className="text-xs sm:text-sm font-display font-bold uppercase tracking-wider text-ink">
           Attention Required
         </h3>
       </div>
@@ -34,19 +34,19 @@ const AttentionRequired = () => {
         {alerts.map((al, idx) => (
           <div
             key={idx}
-            className="p-3 bg-white rounded-xl border border-amber-200/60 flex items-center justify-between gap-3 text-xs"
+            className="p-3 bg-surface rounded-xl border border-line flex items-center justify-between gap-3 text-xs"
           >
             <div>
-              <p className="font-bold text-slate-900 leading-snug">
+              <p className="font-bold text-ink leading-snug">
                 {al.title}
               </p>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">
+              <span className="text-[10px] text-muted mt-0.5 block">
                 {al.time}
               </span>
             </div>
             <Link
               to={al.link}
-              className="px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition-colors shrink-0"
+              className="btn !py-1 !px-3 text-xs font-bold shrink-0"
             >
               Review
             </Link>

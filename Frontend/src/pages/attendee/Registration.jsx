@@ -53,6 +53,7 @@ const Registration = () => {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successData, setSuccessData] = useState(null);
 
@@ -60,14 +61,27 @@ const Registration = () => {
     const fetchData = async () => {
       try {
         const [evRes, tRes] = await Promise.all([
-          eventService.getById(eventId),
+          attendeePortalService.getEventDetails(eventId).catch(() => eventService.getById(eventId)),
           ticketService.getByEvent(eventId)
         ]);
-        if (evRes.success || evRes.data?.success) {
-          setEvent(evRes.data?.event || evRes.data);
+        const evData = evRes?.data?.event || evRes?.event || evRes?.data;
+        if (evData) {
+          setEvent(evData);
         }
-        const ticketList = tRes.data?.tickets || tRes.tickets || [];
-        if (ticketList.length > 0) {
+
+        const regData = evRes?.data?.registration || evRes?.registration;
+        if (regData?.isRegistered) {
+          setAlreadyRegistered(true);
+        }
+
+        let ticketList = tRes?.data?.tickets || tRes?.tickets || tRes?.data || [];
+        if (!Array.isArray(ticketList) || ticketList.length === 0) {
+          const evTickets = evRes?.data?.tickets || evRes?.tickets;
+          if (Array.isArray(evTickets) && evTickets.length > 0) {
+            ticketList = evTickets;
+          }
+        }
+        if (Array.isArray(ticketList) && ticketList.length > 0) {
           setTickets(ticketList);
           setSelectedTicket(ticketList[0]);
         }
@@ -111,6 +125,11 @@ const Registration = () => {
     e.preventDefault();
     setErrorMsg('');
 
+    if (alreadyRegistered) {
+      setErrorMsg('You already have a confirmed registration for this event.');
+      return;
+    }
+
     if (!selectedTicket) {
       setErrorMsg('Please select a conference ticket pass.');
       return;
@@ -126,27 +145,44 @@ const Registration = () => {
     setSubmitting(true);
 
     try {
+      const isFree = (appliedCoupon ? appliedCoupon.finalPrice : (selectedTicket?.price || 0)) <= 0;
       const payload = {
         ticketId: selectedTicket._id,
         couponCode: appliedCoupon ? couponCode : undefined,
         attendeeDetails,
-        paymentDetails: {
+        paymentDetails: isFree ? {
+          method: 'Free Registration',
+          transactionId: `FREE-${Date.now()}`
+        } : {
           method: paymentMethod,
           transactionId: `TXN-${Date.now()}`
         }
       };
 
       const res = await attendeePortalService.registerForEvent(eventId, payload);
-      if (res.data?.success) {
-        setSuccessData(res.data.data.registration);
+      if (res?.success || res?.data?.success) {
+        const reg = res?.data?.registration || res?.registration || res?.data?.data?.registration;
+        setSuccessData(reg);
         setTimeout(() => {
           navigate('/attendee/tickets');
         }, 2000);
       } else {
-        setErrorMsg(res.data?.message || 'Registration failed.');
+        setErrorMsg(res?.message || res?.data?.message || 'Registration failed.');
       }
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Failed to complete registration.');
+      const isAlreadyReg = err.status === 409 ||
+        err.response?.status === 409 ||
+        (err.message && err.message.toLowerCase().includes('already registered'));
+
+      if (isAlreadyReg) {
+        setAlreadyRegistered(true);
+        setErrorMsg('You already hold a confirmed registration for this conference. Redirecting to your ticket pass...');
+        setTimeout(() => {
+          navigate('/attendee/tickets');
+        }, 1800);
+      } else {
+        setErrorMsg(err.response?.data?.message || err.message || 'Failed to complete registration.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -167,6 +203,7 @@ const Registration = () => {
   const finalAmount = appliedCoupon
     ? appliedCoupon.finalPrice
     : (selectedTicket?.price || 0);
+  const isFree = finalAmount <= 0;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -202,6 +239,25 @@ const Registration = () => {
         </div>
       )}
 
+      {/* Already Registered Notice */}
+      {alreadyRegistered && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-900 text-xs shadow-xs">
+          <div className="flex items-center space-x-2.5">
+            <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />
+            <div>
+              <p className="font-bold text-sm">You are already registered for this event</p>
+              <p className="text-blue-700 mt-0.5">Your official conference pass and QR badge have already been issued.</p>
+            </div>
+          </div>
+          <Link
+            to="/attendee/tickets"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition-colors shrink-0 text-center"
+          >
+            View Ticket Pass
+          </Link>
+        </div>
+      )}
+
       {errorMsg && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center space-x-3 text-rose-800 text-xs">
           <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
@@ -217,37 +273,45 @@ const Registration = () => {
             <span>Select Ticket Pass *</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {tickets.map((t) => {
-              const isSelected = selectedTicket?._id === t._id;
-              return (
-                <div
-                  key={t._id}
-                  onClick={() => {
-                    setSelectedTicket(t);
-                    setAppliedCoupon(null);
-                  }}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-blue-600 bg-blue-50/40 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-slate-900">{t.name}</span>
-                    <span className="text-sm font-black text-blue-600">{formatCurrency(t.price)}</span>
+          {tickets.length === 0 ? (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>No ticket tiers have been published for this event yet. Please contact the conference organizers.</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {tickets.map((t) => {
+                const isSelected = selectedTicket?._id === t._id;
+                return (
+                  <div
+                    key={t._id}
+                    onClick={() => {
+                      setSelectedTicket(t);
+                      setAppliedCoupon(null);
+                      setErrorMsg('');
+                    }}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50/40 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-slate-900">{t.name}</span>
+                      <span className="text-sm font-black text-blue-600">{formatCurrency(t.price)}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{t.description || 'Full conference access'}</p>
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Available: {t.remainingQuantity ?? t.quantity ?? 100}</span>
+                      <span className={isSelected ? 'text-blue-600 font-bold' : ''}>
+                        {isSelected ? '✓ Selected' : 'Choose'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{t.description || 'Full conference access'}</p>
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                    <span>Available: {t.remainingQuantity ?? t.quantity ?? 100}</span>
-                    <span className={isSelected ? 'text-blue-600 font-bold' : ''}>
-                      {isSelected ? '✓ Selected' : 'Choose'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Attendee Profile Information */}
@@ -378,45 +442,49 @@ const Registration = () => {
           )}
         </div>
 
-        {/* Payment Method */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-3">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <CreditCard className="w-4 h-4 text-emerald-600" />
-            <span>Payment Simulation</span>
-          </h3>
+        {/* Payment Method - Only show for paid tickets */}
+        {!isFree && (
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-3">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+              <CreditCard className="w-4 h-4 text-emerald-600" />
+              <span>Payment Method</span>
+            </h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            {['Credit Card', 'UPI / QR', 'NetBanking', 'Corporate Pass'].map((method) => (
-              <label
-                key={method}
-                className={`p-3 rounded-xl border-2 flex items-center space-x-2 cursor-pointer transition-all ${
-                  paymentMethod === method
-                    ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 font-bold'
-                    : 'border-slate-200 bg-white text-slate-700'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value={method}
-                  checked={paymentMethod === method}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="sr-only"
-                />
-                <span className="truncate">{method}</span>
-              </label>
-            ))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              {['Credit Card', 'UPI / QR', 'NetBanking', 'Corporate Pass'].map((method) => (
+                <label
+                  key={method}
+                  className={`p-3 rounded-xl border-2 flex items-center space-x-2 cursor-pointer transition-all ${
+                    paymentMethod === method
+                      ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 font-bold'
+                      : 'border-slate-200 bg-white text-slate-700'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method}
+                    checked={paymentMethod === method}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="sr-only"
+                  />
+                  <span className="truncate">{method}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Order Summary & Submit */}
         <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <span className="text-xs text-slate-400">Total Registration Fee</span>
+            <span className="text-xs text-slate-400">
+              {isFree ? 'Registration Fee' : 'Total Registration Fee'}
+            </span>
             <div className="text-2xl font-black text-white">
-              {formatCurrency(finalAmount)}
+              {isFree ? 'Free' : formatCurrency(finalAmount)}
             </div>
-            {appliedCoupon && (
+            {appliedCoupon && !isFree && (
               <span className="text-[11px] text-emerald-400 block">
                 Original: {formatCurrency(selectedTicket?.price || 0)} (Discount Applied)
               </span>
@@ -425,10 +493,20 @@ const Registration = () => {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || alreadyRegistered || tickets.length === 0}
             className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
           >
-            <span>{submitting ? 'Generating Digital Badge...' : 'Confirm Registration & Badge'}</span>
+            <span>
+              {submitting
+                ? 'Generating Digital Badge...'
+                : alreadyRegistered
+                ? 'Pass Already Issued'
+                : tickets.length === 0
+                ? 'No Passes Available'
+                : isFree
+                ? 'Confirm Registration'
+                : 'Confirm Registration & Badge'}
+            </span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

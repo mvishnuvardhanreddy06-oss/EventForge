@@ -9,6 +9,9 @@ const validateRequest = require('../middlewares/validateRequest');
 const validateObjectId = require('../middlewares/validateObjectId');
 const { ROLES } = require('../utils/constants');
 
+const jwt = require('jsonwebtoken');
+const UserModel = require('../models/UserModel');
+
 // Helper to check event ownership / authorization
 const isAuthorizedForEvent = (event, user) => {
   if (!event || !user) return false;
@@ -18,17 +21,69 @@ const isAuthorizedForEvent = (event, user) => {
   return false;
 };
 
+// Helper to decode bearer token if present
+const decodeRequester = (req) => {
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      return jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+};
+
 // GET /api/sessions
 router.get('/', async (req, res, next) => {
   try {
     const { eventId, speakerId, category, roomId } = req.query;
     const query = {};
-    if (eventId) {
-      if (!require('mongoose').Types.ObjectId.isValid(eventId)) {
-        return res.status(400).json({ success: false, message: 'Invalid eventId format' });
+
+    const requester = decodeRequester(req);
+
+    // If requester is Staff, enforce explicit event assignment
+    if (requester && requester.role === ROLES.STAFF) {
+      const staffUser = await UserModel.findById(requester.id);
+      const assignedEvents = staffUser?.assignedEvents || [];
+
+      if (eventId) {
+        if (!require('mongoose').Types.ObjectId.isValid(eventId)) {
+          return res.status(400).json({ success: false, message: 'Invalid eventId format' });
+        }
+        const event = await EventModel.findById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+        const isAssigned = (event.assignedStaff && event.assignedStaff.some(id => id.toString() === requester.id.toString())) ||
+                           assignedEvents.some(id => id.toString() === eventId.toString());
+        if (!isAssigned) {
+          return res.status(403).json({
+            success: false,
+            message: 'You are not authorized to view sessions for this event.',
+            error: { code: 'FORBIDDEN_EVENT_ACCESS' }
+          });
+        }
+        query.eventId = eventId;
+      } else {
+        // Staff did not specify eventId: restrict strictly to staff's assigned events
+        const staffEvents = await EventModel.find({
+          $or: [
+            { assignedStaff: requester.id },
+            { _id: { $in: assignedEvents } }
+          ]
+        }).select('_id');
+        const staffEventIds = staffEvents.map(e => e._id);
+        query.eventId = { $in: staffEventIds };
       }
-      query.eventId = eventId;
+    } else {
+      if (eventId) {
+        if (!require('mongoose').Types.ObjectId.isValid(eventId)) {
+          return res.status(400).json({ success: false, message: 'Invalid eventId format' });
+        }
+        query.eventId = eventId;
+      }
     }
+
     if (speakerId) {
       if (!require('mongoose').Types.ObjectId.isValid(speakerId)) {
         return res.status(400).json({ success: false, message: 'Invalid speakerId format' });
@@ -57,10 +112,27 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', validateObjectId('id'), async (req, res, next) => {
   try {
     const session = await SessionModel.findById(req.params.id)
-      .populate('speakerId')
-      .populate('venueId')
-      .populate('eventId', 'title startDate endDate');
+      .populate('speakerId', 'name designation company profileImage')
+      .populate('venueId', 'name rooms')
+      .populate('eventId', 'title startDate endDate assignedStaff');
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    const requester = decodeRequester(req);
+    if (requester && requester.role === ROLES.STAFF) {
+      const staffUser = await UserModel.findById(requester.id);
+      const assignedEvents = staffUser?.assignedEvents || [];
+      const event = session.eventId;
+      const isAssigned = (event?.assignedStaff && event.assignedStaff.some(id => id.toString() === requester.id.toString())) ||
+                         assignedEvents.some(id => id.toString() === event?._id.toString());
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to view this session.',
+          error: { code: 'FORBIDDEN_EVENT_ACCESS' }
+        });
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Session details retrieved',

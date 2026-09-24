@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Globe, Building2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { venueService } from '../../../services/api';
 
 const TIMEZONES = [
   'IST — India Standard Time (UTC+5:30)',
@@ -11,6 +12,68 @@ const TIMEZONES = [
 ];
 
 const VenueScheduleStep = ({ formData, onChange, errors = {} }) => {
+  const [dbVenues, setDbVenues] = useState([]);
+  const [conflictWarning, setConflictWarning] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(null);
+
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const res = await venueService.getAll();
+        const list = res?.data?.venues || res?.venues || (Array.isArray(res?.data) ? res.data : []);
+        setDbVenues(list);
+      } catch (err) {
+        console.error('Error loading venues:', err);
+      }
+    };
+    fetchVenues();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const checkConflict = async () => {
+      if (!formData.venueId || !formData.startDate || !formData.endDate) {
+        setConflictWarning(null);
+        setIsAvailable(null);
+        return;
+      }
+      setCheckingAvailability(true);
+      try {
+        const res = await venueService.checkAvailability(formData.venueId, {
+          startDate: formData.startDate,
+          endDate: formData.endDate
+        });
+        if (!active) return;
+        if (res.available === false || res.data?.available === false) {
+          const msg = res.message || res.data?.message || 'Venue is already booked for another event during these dates.';
+          setConflictWarning(msg);
+          setIsAvailable(false);
+        } else {
+          setConflictWarning(null);
+          setIsAvailable(true);
+        }
+      } catch (err) {
+        if (!active) return;
+        if (err.response?.status === 409) {
+          setConflictWarning(err.response?.data?.message || 'Venue conflict detected.');
+          setIsAvailable(false);
+        }
+      } finally {
+        if (active) setCheckingAvailability(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      checkConflict();
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [formData.venueId, formData.startDate, formData.endDate]);
+
   const venueType = formData.venueType || 'Physical';
   const capacity = Number(formData.capacity) || 1500;
   const expectedAttendees = Number(formData.expectedAttendees) || 1200;
@@ -136,25 +199,81 @@ const VenueScheduleStep = ({ formData, onChange, errors = {} }) => {
 
             {/* Physical Venue Details */}
             {(venueType === 'Physical' || venueType === 'Hybrid') && (
-              <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="space-y-4 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-800 text-xs">Physical Venue Details</h4>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange('venueName', 'Hyderabad International Convention Centre (HICC)');
-                      onChange('address', 'Novotel & HICC Complex, Cyberabad');
-                      onChange('city', 'Hyderabad');
-                      onChange('state', 'Telangana');
-                      onChange('country', 'India');
-                      onChange('postalCode', '500081');
-                      onChange('capacity', 1500);
-                    }}
-                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
-                  >
-                    Use HICC Default
-                  </button>
+                  {dbVenues.length > 0 && (
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      {dbVenues.length} registered venues found
+                    </span>
+                  )}
                 </div>
+
+                {/* Registered Venue Selector */}
+                {dbVenues.length > 0 && (
+                  <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
+                    <label className="block font-bold text-slate-700 text-xs">
+                      Select Registered Organization Venue
+                    </label>
+                    <select
+                      value={formData.venueId || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        onChange('venueId', selectedId);
+                        const v = dbVenues.find((x) => (x._id || x.id) === selectedId);
+                        if (v) {
+                          onChange('venueName', v.name);
+                          onChange('address', v.address || '');
+                          onChange('city', v.city || '');
+                          onChange('state', v.state || '');
+                          onChange('country', v.country || 'India');
+                          onChange('postalCode', v.postalCode || '');
+                          if (v.capacity) onChange('capacity', v.capacity);
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold bg-white cursor-pointer"
+                    >
+                      <option value="">-- Choose from existing venues (or fill custom below) --</option>
+                      {dbVenues.map((v) => (
+                        <option key={v._id || v.id} value={v._id || v.id}>
+                          {v.name} ({v.city}) — Cap: {v.capacity?.toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Real-time Conflict Alert Banner */}
+                {checkingAvailability && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center space-x-2 text-blue-700 text-xs font-medium animate-pulse">
+                    <span>Checking venue schedule availability in real-time...</span>
+                  </div>
+                )}
+
+                {!checkingAvailability && conflictWarning && (
+                  <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-2xl flex items-start space-x-3 text-amber-900 shadow-sm">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <h5 className="font-bold text-xs text-amber-900 tracking-tight flex items-center space-x-2">
+                        <span>VENUE SCHEDULE COLLISION DETECTED</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-800 font-bold uppercase">409 Conflict</span>
+                      </h5>
+                      <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                        {conflictWarning}
+                      </p>
+                      <p className="text-[11px] text-amber-700">
+                        Multiple events cannot occupy the same venue at the same time. Please pick another facility or change the event dates before publishing.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {!checkingAvailability && isAvailable && formData.venueId && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center space-x-2 text-emerald-800 text-xs font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>✓ Venue is verified available. No overlapping events scheduled during this window.</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">

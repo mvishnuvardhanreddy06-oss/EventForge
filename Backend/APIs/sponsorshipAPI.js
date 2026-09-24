@@ -12,7 +12,51 @@ router.get('/packages', async (req, res, next) => {
   try {
     const { eventId } = req.query;
     const query = eventId ? { eventId } : {};
-    const packages = await SponsorshipPackageModel.find(query).sort({ price: -1 });
+    let packages = await SponsorshipPackageModel.find(query).sort({ price: -1 });
+
+    // If a specific event has no packages yet, auto-provision standard tiers so organizers can immediately register sponsors
+    if (eventId && packages.length === 0) {
+      const standardPackages = [
+        {
+          eventId,
+          name: 'Platinum Tier Partner',
+          price: 250000,
+          description: 'Maximum brand presence, keynote co-sponsorship, and prime 40x40 exhibition booth.',
+          benefits: ['Opening Keynote Mention', 'Prime Booth Space', '20 All-Access VIP Passes', 'Logo on All Media'],
+          availableSlots: 3,
+          status: 'active'
+        },
+        {
+          eventId,
+          name: 'Gold Tier Partner',
+          price: 150000,
+          description: 'Featured break-out session sponsor and prominent placement on attendee swag bags.',
+          benefits: ['Breakout Room Sponsor', '10 VIP Passes', 'Logo on Website & App'],
+          availableSlots: 5,
+          status: 'active'
+        },
+        {
+          eventId,
+          name: 'Silver Tier Partner',
+          price: 75000,
+          description: 'Entry-level partner package with dedicated networking kiosk and directory listing.',
+          benefits: ['Networking Kiosk', '5 Passes', 'Directory Profile'],
+          availableSlots: 10,
+          status: 'active'
+        },
+        {
+          eventId,
+          name: 'Bronze / Startup Partner',
+          price: 35000,
+          description: 'Designed for emerging startups and innovators seeking visibility with enterprise leaders.',
+          benefits: ['Startup Demo Table', '2 Passes', 'Event App Directory Listing'],
+          availableSlots: 15,
+          status: 'active'
+        }
+      ];
+      packages = await SponsorshipPackageModel.insertMany(standardPackages);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Sponsorship packages retrieved',

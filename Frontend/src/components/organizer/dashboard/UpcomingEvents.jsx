@@ -1,64 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
+import { analyticsService } from '../../../services/api';
 
 const UpcomingEvents = () => {
-  const events = [
-    {
-      id: 'evt-1',
-      title: 'Global Tech Leadership Summit 2026',
-      date: 'Sep 24, 2026',
-      time: '09:00 AM – 06:00 PM',
-      location: 'Hyderabad International Convention Centre',
-      currentRegistrations: 1240,
-      maxCapacity: 1500,
-      capacityPercent: 82,
-      status: 'Published',
-      actionLabel: 'Manage Event',
-      actionLink: '/organizer/events/evt-1'
-    },
-    {
-      id: 'evt-2',
-      title: 'AI & Cloud Innovation Conference',
-      date: 'Oct 04, 2026',
-      time: '10:00 AM – 05:30 PM',
-      location: 'Hyderabad',
-      currentRegistrations: 684,
-      maxCapacity: 1000,
-      capacityPercent: 68,
-      status: 'Published',
-      actionLabel: 'Manage Event',
-      actionLink: '/organizer/events/evt-2'
-    },
-    {
-      id: 'evt-3',
-      title: 'FinTech Future Forum',
-      date: 'Oct 18, 2026',
-      time: '09:30 AM – 04:30 PM',
-      location: 'Bengaluru',
-      currentRegistrations: 420,
-      maxCapacity: 750,
-      capacityPercent: 56,
-      status: 'Draft',
-      actionLabel: 'Continue Editing',
-      actionLink: '/organizer/events/evt-3/edit'
-    }
-  ];
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await analyticsService.getOrganizerDashboard();
+        const rawEvents = res?.data?.events || res?.events || [];
+        if (Array.isArray(rawEvents)) {
+          setEvents(rawEvents.slice(0, 3).map(e => ({
+            id: e._id || e.id,
+            title: e.title,
+            date: e.startDate ? new Date(e.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Upcoming',
+            time: e.startDate ? new Date(e.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '09:00 AM',
+            location: e.venue || 'Virtual',
+            currentRegistrations: e.currentRegistrations || 0,
+            maxCapacity: e.maxCapacity || 1000,
+            capacityPercent: e.capacityPercent || 0,
+            status: (e.status || 'published').charAt(0).toUpperCase() + (e.status || 'published').slice(1),
+            actionLabel: 'Manage Event',
+            actionLink: `/organizer/events/${e._id || e.id}`
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to load upcoming events for dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-5">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div className="panel space-y-5">
+      <div className="flex items-center justify-between pb-3 border-b border-line">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          <h3 className="text-base font-display font-bold text-ink tracking-tight">
             Upcoming Events
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Your next events and their current registration status.
           </p>
         </div>
         <Link
           to="/organizer/events"
-          className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+          className="text-xs font-bold text-accent hover:underline flex items-center space-x-1"
         >
           <span>View All</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -71,7 +62,7 @@ const UpcomingEvents = () => {
           return (
             <div
               key={ev.id}
-              className="bg-slate-50/60 rounded-xl border border-slate-200/80 p-4 hover:border-slate-300 hover:bg-slate-50 transition-all flex flex-col justify-between space-y-4"
+              className="bg-bg/40 rounded-xl border border-line p-4 hover:border-accent/40 transition-all flex flex-col justify-between space-y-4"
             >
               <div className="space-y-3">
                 {/* Status Badge */}
@@ -79,32 +70,32 @@ const UpcomingEvents = () => {
                   <span
                     className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       isPublished
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                        ? 'bg-teal/10 text-teal border border-teal/20'
+                        : 'bg-gold/10 text-gold border border-gold/20'
                     }`}
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        isPublished ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                        isPublished ? 'bg-teal animate-pulse' : 'bg-gold'
                       }`}
                     />
                     <span>{ev.status}</span>
                   </span>
 
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] font-mono text-muted">
                     {ev.date}
                   </span>
                 </div>
 
                 {/* Event Title */}
-                <h4 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                <h4 className="text-sm font-display font-bold text-ink leading-snug line-clamp-2">
                   {ev.title}
                 </h4>
 
                 {/* Venue / Location */}
-                <div className="space-y-1 text-xs text-slate-500">
+                <div className="space-y-1 text-xs text-muted">
                   <div className="flex items-center space-x-1.5 truncate">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-muted shrink-0" />
                     <span className="truncate">{ev.location}</span>
                   </div>
                 </div>
@@ -112,20 +103,18 @@ const UpcomingEvents = () => {
                 {/* Registration Capacity Progress Bar */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Registrations</span>
-                    <span className="font-bold text-slate-900">
+                    <span className="text-muted font-medium">Registrations</span>
+                    <span className="font-bold text-ink">
                       {ev.currentRegistrations.toLocaleString()} / {ev.maxCapacity.toLocaleString()}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-line rounded-full h-2 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        ev.capacityPercent >= 80 ? 'bg-blue-600' : 'bg-blue-500'
-                      }`}
+                      className="h-full rounded-full transition-all duration-500 bg-accent"
                       style={{ width: `${ev.capacityPercent}%` }}
                     />
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-400 block text-right">
+                  <span className="text-[11px] font-semibold text-muted block text-right">
                     {ev.capacityPercent}% capacity
                   </span>
                 </div>
@@ -134,10 +123,10 @@ const UpcomingEvents = () => {
               {/* Action Button */}
               <Link
                 to={ev.actionLink}
-                className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold shadow-2xs transition-colors flex items-center justify-center space-x-1.5"
+                className="btn w-full py-2 px-3 text-xs font-bold flex items-center justify-center space-x-1.5"
               >
                 <span>{ev.actionLabel}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                <ArrowRight className="w-3.5 h-3.5 text-muted" />
               </Link>
             </div>
           );

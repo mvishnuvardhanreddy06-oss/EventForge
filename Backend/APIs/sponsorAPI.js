@@ -30,69 +30,22 @@ async function getSponsorForUser(user) {
     }
   }
 
-  // Auto-initialize if still not found
+  // If still not found, create only a minimal legitimate baseline record
   if (!sponsor) {
-    const firstEvent = await EventModel.findOne({ status: 'published' }) || await EventModel.findOne({});
-    const firstPkg = await SponsorshipPackageModel.findOne({ eventId: firstEvent?._id }) || await SponsorshipPackageModel.findOne({});
-
     sponsor = await SponsorModel.create({
       userId: user._id,
-      organizationId: firstEvent?.organizationId || user.organizationId,
-      eventId: firstEvent?._id,
-      companyName: user.name.replace(' Representative', '') || 'Google Cloud',
-      contactPerson: user.name || 'Rachel Adams',
-      contactTitle: 'Director of Strategic Partnerships',
+      organizationId: user.organizationId || null,
+      eventId: null,
+      companyName: user.name || 'Sponsor Organization',
+      contactPerson: user.name || '',
+      contactTitle: '',
       email: user.email,
-      phone: '+91 98765 43210',
-      website: 'https://cloud.google.com',
-      packageId: firstPkg?._id || null,
-      status: 'approved',
-      brandAssets: [
-        {
-          name: 'Corporate Vector Logo.png',
-          fileUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400',
-          assetType: 'logo',
-          fileSize: '1.2 MB'
-        }
-      ]
+      phone: user.phone || '',
+      website: '',
+      packageId: null,
+      status: 'pending',
+      brandAssets: []
     });
-
-    // Also create initial sponsorship if package exists
-    if (firstEvent && firstPkg) {
-      await SponsorshipModel.create({
-        sponsorId: sponsor._id,
-        eventId: firstEvent._id,
-        packageId: firstPkg._id,
-        deliverables: [
-          { title: 'Brand Logo on Official Banner', dueDate: new Date(Date.now() + 5 * 86400000), status: 'approved', priority: 'high' },
-          { title: 'Executive Keynote Bio & Slot Confirmation', dueDate: new Date(Date.now() + 10 * 86400000), status: 'completed', priority: 'high' },
-          { title: 'Exhibition Hall Booth Requirements', dueDate: new Date(Date.now() + 15 * 86400000), status: 'in_progress', priority: 'medium' },
-          { title: 'Promotional Video for Session Breakouts', dueDate: new Date(Date.now() + 18 * 86400000), status: 'pending', priority: 'medium' },
-          { title: 'Attendee Swag Bag Digital Inserts', dueDate: new Date(Date.now() + 20 * 86400000), status: 'pending', priority: 'low' }
-        ],
-        paymentStatus: 'paid',
-        contractStatus: 'active',
-        totalAmount: 500000,
-        paidAmount: 500000,
-        status: 'active'
-      });
-
-      // Create initial invoice
-      await InvoiceModel.create({
-        invoiceNumber: 'INV-2026-0042',
-        sponsorId: sponsor._id,
-        eventId: firstEvent._id,
-        packageId: firstPkg._id,
-        amount: 423728,
-        tax: 76272,
-        total: 500000,
-        dueDate: new Date(Date.now() - 10 * 86400000),
-        paidDate: new Date(Date.now() - 12 * 86400000),
-        paymentMethod: 'Wire Transfer',
-        status: 'paid',
-        notes: 'Annual Global Sponsorship Agreement - Paid in Full'
-      });
-    }
   }
 
   return sponsor;
@@ -130,7 +83,7 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
               _id: d._id,
               sponsorshipId: s._id,
               title: d.title,
-              eventTitle: s.eventId?.title || 'Global Tech Summit 2026',
+              eventTitle: s.eventId?.title || 'Event',
               dueDate: d.dueDate ? new Date(d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Pending',
               priority: d.priority || 'medium',
               status: d.status
@@ -142,7 +95,7 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
 
     // Invoices / Investment
     const invoices = await InvoiceModel.find({ sponsorId: sponsor._id });
-    const totalInvestment = sponsorships.reduce((acc, s) => acc + (s.totalAmount || 500000), 0) || 1250000;
+    const totalInvestment = sponsorships.reduce((acc, s) => acc + (s.totalAmount || s.packageId?.price || 0), 0);
 
     // Upcoming events
     const eventIds = [...new Set(sponsorships.map(s => s.eventId?._id).filter(Boolean))];
@@ -152,9 +105,9 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
       .map(s => ({
         eventId: s.eventId._id,
         name: s.eventId.title,
-        date: s.eventId.startDate ? new Date(s.eventId.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'September 24, 2026',
-        venue: 'Hyderabad International Convention Centre',
-        package: s.packageId?.name || 'Gold Sponsor',
+        date: s.eventId.startDate ? new Date(s.eventId.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
+        venue: s.eventId.venueId?.name || '',
+        package: s.packageId?.name || 'Sponsorship Package',
         status: s.status === 'active' ? 'Confirmed' : s.status
       }));
 
@@ -164,10 +117,10 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
       const sComp = sDelivs.filter(d => d.status === 'completed' || d.status === 'approved').length;
       return {
         _id: s._id,
-        eventTitle: s.eventId?.title || 'Global Tech Leadership Summit 2026',
-        packageName: s.packageId?.name || 'Gold Sponsor',
+        eventTitle: s.eventId?.title || 'Sponsored Event',
+        packageName: s.packageId?.name || 'Sponsorship Package',
         status: s.status === 'active' ? 'Confirmed' : s.status,
-        investment: s.totalAmount || 500000,
+        investment: s.totalAmount || s.packageId?.price || 0,
         deliverablesCount: sDelivs.length,
         completedCount: sComp,
         pendingCount: Math.max(0, sDelivs.length - sComp)
@@ -189,7 +142,7 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
       _id: a._id,
       title: a.title,
       message: a.message,
-      eventTitle: a.eventId?.title || 'Global Tech Leadership Summit 2026',
+      eventTitle: a.eventId?.title || 'Event Announcement',
       date: new Date(a.publishedAt || a.createdAt).toLocaleDateString(),
       priority: a.priority || 'high'
     }));
@@ -203,9 +156,9 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN),
           contactPerson: sponsor.contactPerson
         },
         summary: {
-          activeSponsorships: activeSponsorships.length || 3,
-          upcomingEvents: upcomingEvents.length || 2,
-          pendingDeliverables: pendingDeliverablesList.length || 5,
+          activeSponsorships: activeSponsorships.length,
+          upcomingEvents: upcomingEvents.length,
+          pendingDeliverables: pendingDeliverablesList.length,
           totalInvestment
         },
         currentSponsorships,
@@ -747,42 +700,21 @@ router.get('/me/payments', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN), 
       .populate('packageId', 'name')
       .sort({ createdAt: -1 });
 
-    if (invoices.length === 0) {
-      // Seed realistic invoice
-      const firstSponsorship = await SponsorshipModel.findOne({ sponsorId: sponsor._id }).populate('packageId');
-      const invoice = await InvoiceModel.create({
-        invoiceNumber: 'INV-2026-0042',
-        sponsorId: sponsor._id,
-        sponsorshipId: firstSponsorship?._id,
-        eventId: sponsor.eventId,
-        packageId: sponsor.packageId,
-        amount: 423728,
-        tax: 76272,
-        total: 500000,
-        dueDate: new Date('2026-09-15'),
-        paidDate: new Date('2026-09-12'),
-        paymentMethod: 'Wire Transfer',
-        status: 'paid',
-        notes: 'Annual Platinum Tier Sponsorship'
-      });
-      invoices = [invoice];
-    }
-
-    const totalValue = invoices.reduce((acc, i) => acc + (i.total || 0), 0) || 1250000;
-    const paid = invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || 0), 0) || 1000000;
+    const totalValue = invoices.reduce((acc, i) => acc + (i.total || 0), 0);
+    const paid = invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || 0), 0);
     const pending = Math.max(0, totalValue - paid);
 
     const formattedInvoices = invoices.map(i => ({
       _id: i._id,
       invoiceNumber: i.invoiceNumber,
-      event: i.eventId?.title || 'Global Tech Leadership Summit 2026',
-      package: i.packageId?.name || 'Gold Sponsor',
-      amount: i.total || 500000,
-      dueDate: i.dueDate ? new Date(i.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'September 15',
+      event: i.eventId?.title || 'Sponsored Event',
+      package: i.packageId?.name || 'Sponsorship Package',
+      amount: i.total || 0,
+      dueDate: i.dueDate ? new Date(i.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
       status: i.status === 'paid' ? 'Paid' : 'Pending',
-      paymentMethod: i.paymentMethod,
-      tax: i.tax,
-      netAmount: i.amount
+      paymentMethod: i.paymentMethod || '',
+      tax: i.tax || 0,
+      netAmount: i.amount || 0
     }));
 
     res.status(200).json({
@@ -796,6 +728,92 @@ router.get('/me/payments', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN), 
         },
         invoices: formattedInvoices
       }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 13B. GET /api/sponsors/me/invoices - List invoices for sponsor
+router.get('/me/invoices', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN), async (req, res, next) => {
+  try {
+    const sponsor = await getSponsorForUser(req.user);
+    const { status, filter } = req.query;
+
+    const query = { sponsorId: sponsor._id };
+    const statusQuery = status || filter;
+    if (statusQuery && statusQuery !== 'all') {
+      query.status = statusQuery.toLowerCase();
+    }
+
+    const invoices = await InvoiceModel.find(query)
+      .populate('eventId', 'title startDate endDate organizationId')
+      .populate('packageId', 'name price')
+      .populate('sponsorId', 'companyName email contactPerson')
+      .sort({ createdAt: -1 });
+
+    const totalBilled = invoices.reduce((acc, i) => acc + (i.total || i.amount || 0), 0);
+    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + (i.total || i.amount || 0), 0);
+    const totalPending = Math.max(0, totalBilled - totalPaid);
+
+    res.status(200).json({
+      success: true,
+      message: 'Invoices retrieved successfully',
+      data: {
+        invoices,
+        total: invoices.length,
+        summary: {
+          totalBilled,
+          totalPaid,
+          totalPending
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 13C. POST /api/sponsors/me/invoices/:invoiceId/pay - Settle / Pay invoice
+router.post('/me/invoices/:invoiceId/pay', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADMIN), async (req, res, next) => {
+  try {
+    const sponsor = await getSponsorForUser(req.user);
+    const { invoiceId } = req.params;
+    const { paymentMethod = 'Corporate Credit Card' } = req.body;
+
+    if (!require('mongoose').Types.ObjectId.isValid(invoiceId)) {
+      return res.status(400).json({ success: false, message: 'Invalid invoice ID format' });
+    }
+
+    const invoice = await InvoiceModel.findOne({
+      _id: invoiceId,
+      sponsorId: sponsor._id
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+
+    if (invoice.status === 'paid') {
+      return res.status(400).json({ success: false, message: 'Invoice is already settled and paid' });
+    }
+
+    invoice.status = 'paid';
+    invoice.paidDate = new Date();
+    invoice.paymentMethod = paymentMethod;
+    await invoice.save();
+
+    if (invoice.sponsorshipId) {
+      await SponsorshipModel.findByIdAndUpdate(invoice.sponsorshipId, {
+        paymentStatus: 'paid',
+        paidAmount: invoice.total
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Invoice settled successfully',
+      data: { invoice }
     });
   } catch (err) {
     next(err);
@@ -861,44 +879,6 @@ router.get('/me/announcements', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADM
       .populate('createdBy', 'name')
       .sort({ publishedAt: -1 });
 
-    if (announcements.length === 0) {
-      announcements = [
-        {
-          _id: 'sann-1',
-          title: 'Sponsor Booth Allocation Finalized',
-          message: 'Booth layout schematics for Hall A have been finalized. VIP 40x40 spaces are allocated near Entrance 1.',
-          eventId: { title: 'Global Tech Leadership Summit 2026' },
-          createdBy: { name: 'Exhibition Operations' },
-          priority: 'urgent',
-          type: 'venue',
-          publishedAt: new Date(Date.now() - 3600000),
-          readBy: []
-        },
-        {
-          _id: 'sann-2',
-          title: 'Sponsor Branding Deadline Extended',
-          message: 'High-resolution vectors and promotional video inserts deadline has been extended to September 22.',
-          eventId: { title: 'Global Tech Leadership Summit 2026' },
-          createdBy: { name: 'Branding Team' },
-          priority: 'high',
-          type: 'general',
-          publishedAt: new Date(Date.now() - 14400000),
-          readBy: [req.user._id]
-        },
-        {
-          _id: 'sann-3',
-          title: 'Event Setup Begins at 7:00 AM',
-          message: 'Contractors and sponsor logistics teams may access the exhibition floor starting 7:00 AM on September 24.',
-          eventId: { title: 'Global Tech Leadership Summit 2026' },
-          createdBy: { name: 'Venue Operations' },
-          priority: 'medium',
-          type: 'venue',
-          publishedAt: new Date(Date.now() - 86400000),
-          readBy: []
-        }
-      ];
-    }
-
     let mapped = announcements.map(a => {
       const aObj = a.toObject ? a.toObject() : a;
       const isRead = a.readBy && a.readBy.some(id => id.toString() === req.user._id.toString());
@@ -906,7 +886,7 @@ router.get('/me/announcements', verifyToken, verifyRole(ROLES.SPONSOR, ROLES.ADM
         _id: aObj._id,
         title: aObj.title,
         message: aObj.message,
-        eventTitle: aObj.eventId?.title || 'Global Tech Leadership Summit 2026',
+        eventTitle: aObj.eventId?.title || 'Event Announcement',
         sender: aObj.createdBy?.name || 'Event Organizer',
         date: new Date(aObj.publishedAt || aObj.createdAt).toLocaleDateString(),
         time: new Date(aObj.publishedAt || aObj.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -1143,7 +1123,7 @@ router.get('/:id', async (req, res, next) => {
 // POST /api/sponsors
 router.post('/', verifyToken, verifyRole(ROLES.ORGANIZER, ROLES.ADMIN, ROLES.SPONSOR), validateRequest(['eventId', 'companyName', 'email']), async (req, res, next) => {
   try {
-    const orgId = req.body.organizationId || req.user.organizationId;
+    const orgId = req.user.role === ROLES.ADMIN ? (req.body.organizationId || req.user.organizationId) : req.user.organizationId;
     const sponsor = await SponsorModel.create({
       ...req.body,
       organizationId: orgId,

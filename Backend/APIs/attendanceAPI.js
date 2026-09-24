@@ -15,8 +15,17 @@ const { ROLES, ATTENDANCE_METHOD } = require('../utils/constants');
 const isAuthorizedForEvent = (event, user) => {
   if (!event || !user) return false;
   if (user.role === ROLES.ADMIN) return true;
-  if (user.organizationId && event.organizationId && user.organizationId.toString() === event.organizationId.toString()) return true;
-  if (event.organizerId && user._id && event.organizerId.toString() === user._id.toString()) return true;
+  if (user.role === ROLES.ORGANIZER) {
+    if (user.organizationId && event.organizationId && user.organizationId.toString() === event.organizationId.toString()) return true;
+    if (event.organizerId && user._id && event.organizerId.toString() === user._id.toString()) return true;
+    return false;
+  }
+  if (user.role === ROLES.STAFF) {
+    // Staff must be explicitly assigned to this event, not just same organization!
+    const isAssigned = (event.assignedStaff && event.assignedStaff.some(id => id.toString() === user._id.toString())) ||
+                       (user.assignedEvents && user.assignedEvents.some(id => id.toString() === event._id.toString()));
+    return isAssigned;
+  }
   return false;
 };
 
@@ -46,13 +55,19 @@ router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES
     if (!isAuthorizedForEvent(event, req.user)) {
       return res.status(403).json({
         success: false,
-        message: 'You are not authorized to check in attendees for this event.',
+        message: 'Unauthorized staff: You are not assigned to this event.',
         error: { code: 'FORBIDDEN_EVENT_CHECKIN' }
       });
     }
 
-    // Find registration with this qrToken
-    const registration = await RegistrationModel.findOne({ qrToken })
+    // Find registration with this qrToken or registrationNumber
+    const tokenQuery = (qrToken || '').trim();
+    const registration = await RegistrationModel.findOne({
+      $or: [
+        { qrToken: tokenQuery },
+        { registrationNumber: tokenQuery }
+      ]
+    })
       .populate('attendeeId', 'name email profileImage phone')
       .populate('ticketId', 'name price')
       .populate('eventId', 'title');
@@ -60,7 +75,7 @@ router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES
     if (!registration) {
       return res.status(404).json({
         success: false,
-        message: 'Invalid QR Token. Registration record not found.',
+        message: 'Invalid ticket: Registration record not found.',
         error: { code: 'INVALID_QR_TOKEN' }
       });
     }
@@ -68,15 +83,17 @@ router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES
     if (registration.eventId._id.toString() !== eventId) {
       return res.status(400).json({
         success: false,
-        message: `This ticket is for "${registration.eventId.title}", not the selected event.`,
+        message: `Wrong event: This ticket is for "${registration.eventId.title}", not the selected event.`,
         error: { code: 'EVENT_MISMATCH' }
       });
     }
 
-    if (registration.status !== 'confirmed') {
+    if (registration.status !== 'confirmed' || registration.paymentStatus === 'pending') {
       return res.status(400).json({
         success: false,
-        message: `Ticket status is ${registration.status}. Only confirmed tickets can be checked in.`,
+        message: registration.paymentStatus === 'pending'
+          ? 'Registration not confirmed: Payment is pending.'
+          : `Registration not confirmed: Status is ${registration.status}.`,
         error: { code: 'TICKET_NOT_CONFIRMED' }
       });
     }
@@ -106,7 +123,7 @@ router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES
       sessionId: null,
       attendeeId: registration.attendeeId._id,
       checkedInAt: checkedInTime,
-      method: ATTENDANCE_METHOD.QR,
+      method: tokenQuery.startsWith('EFQR-') ? ATTENDANCE_METHOD.QR : ATTENDANCE_METHOD.MANUAL,
       checkedInBy: req.user._id
     });
 
@@ -120,10 +137,15 @@ router.post('/scan', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES
 
     res.status(200).json({
       success: true,
-      message: `Check-in successful for ${registration.attendeeId.name}`,
+      message: `Check-in Successful for ${registration.attendeeId.name}`,
       data: {
         registration,
-        checkedInAt: checkedInTime
+        checkedIn: true,
+        checkedInAt: checkedInTime,
+        attendeeName: registration.attendeeId.name,
+        eventTitle: registration.eventId.title,
+        ticketTier: registration.ticketId?.name || 'General Admission',
+        checkInTime: checkedInTime
       }
     });
   } catch (err) {
@@ -221,14 +243,111 @@ router.get('/event/:eventId', verifyToken, validateObjectId('eventId'), async (r
 router.get('/session/:sessionId', verifyToken, validateObjectId('sessionId'), async (req, res, next) => {
   try {
     const { sessionId } = req.params;
+    const session = await SessionModel.findById(sessionId)
+      .populate('speakerId', 'name designation company profileImage')
+      .populate('venueId', 'name rooms');
+
+    if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    const event = await EventModel.findById(session.eventId);
+    if (!isAuthorizedForEvent(event, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to view attendance for this event.',
+        error: { code: 'FORBIDDEN_EVENT_ACCESS' }
+      });
+    }
+
+    // Existing check-in records for this session
     const sessionAttendance = await AttendanceModel.find({ sessionId })
       .populate('attendeeId', 'name email profileImage')
+      .populate('checkedInBy', 'name')
       .sort({ checkedInAt: -1 });
+
+    const checkedInMap = new Map();
+    sessionAttendance.forEach(a => {
+      if (a.attendeeId) {
+        checkedInMap.set(a.attendeeId._id.toString(), {
+          attendanceId: a._id,
+          checkedInAt: a.checkedInAt,
+          checkedInBy: a.checkedInBy?.name || 'Staff',
+          method: a.method
+        });
+      }
+    });
+
+    // Registered attendees for the event
+    const registrations = await RegistrationModel.find({
+      eventId: session.eventId,
+      status: 'confirmed'
+    })
+      .populate('attendeeId', 'name email phone profileImage')
+      .populate('ticketId', 'name')
+      .sort({ createdAt: 1 });
+
+    const registeredAttendees = registrations
+      .filter(r => r.attendeeId)
+      .map(r => {
+        const attInfo = checkedInMap.get(r.attendeeId._id.toString());
+        return {
+          attendeeId: r.attendeeId._id,
+          name: r.attendeeId.name,
+          email: r.attendeeId.email,
+          phone: r.attendeeId.phone || '',
+          ticketName: r.ticketId?.name || 'General Admission',
+          registrationNumber: r.registrationNumber,
+          isCheckedIn: Boolean(attInfo),
+          checkedInAt: attInfo ? attInfo.checkedInAt : null,
+          checkedInBy: attInfo ? attInfo.checkedInBy : null,
+          method: attInfo ? attInfo.method : null,
+          attendanceId: attInfo ? attInfo.attendanceId : null
+        };
+      });
 
     res.status(200).json({
       success: true,
       message: 'Session attendance retrieved',
-      data: { sessionAttendance }
+      data: {
+        session,
+        sessionAttendance,
+        registeredAttendees,
+        totalRegistered: registeredAttendees.length,
+        totalCheckedIn: sessionAttendance.length
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/attendance/session/:sessionId/:attendeeId (Unmark session attendance)
+router.delete('/session/:sessionId/:attendeeId', verifyToken, verifyRole(ROLES.STAFF, ROLES.ORGANIZER, ROLES.ADMIN), async (req, res, next) => {
+  try {
+    const { sessionId, attendeeId } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(sessionId) || !require('mongoose').Types.ObjectId.isValid(attendeeId)) {
+      return res.status(400).json({ success: false, message: 'Invalid ID format', error: { code: 'INVALID_OBJECT_ID' } });
+    }
+
+    const session = await SessionModel.findById(sessionId);
+    if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    const event = await EventModel.findById(session.eventId);
+    if (!isAuthorizedForEvent(event, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized staff: You are not assigned to this event.',
+        error: { code: 'FORBIDDEN_EVENT_ACCESS' }
+      });
+    }
+
+    const deleted = await AttendanceModel.findOneAndDelete({ sessionId, attendeeId });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Attendance record not found.' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Session attendance unmarked successfully.'
     });
   } catch (err) {
     next(err);

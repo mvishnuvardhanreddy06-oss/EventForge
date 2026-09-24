@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { subscriptionService } from '../../services/api';
 import {
   CreditCard,
   CheckCircle2,
@@ -21,328 +22,7 @@ import CancelSubscriptionModal from '../../components/admin/subscriptions/Cancel
 import EditPlanModal from '../../components/admin/subscriptions/EditPlanModal';
 import Pagination from '../../components/admin/subscriptions/Pagination';
 
-const INITIAL_SUBSCRIPTIONS = [
-  {
-    id: 'sub-1',
-    orgName: 'Apex Global Events',
-    email: 'billing@apexevents.com',
-    plan: 'Pro',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Aug 01, 2026',
-    renewalDate: 'Oct 01, 2026',
-    usage: { users: { current: 24, max: 50, percent: 48 }, events: { current: 8, max: 20, percent: 40 }, storage: { current: '12 GB', max: '50 GB', percent: 24 } },
-    history: [
-      { date: 'Aug 01, 2026', event: 'Subscription activated' },
-      { date: 'Sep 01, 2026', event: 'Payment received (₹4,999)' },
-      { date: 'Sep 10, 2026', event: 'Plan usage updated' }
-    ]
-  },
-  {
-    id: 'sub-2',
-    orgName: 'Nexus Tech Summits',
-    email: 'finance@nexus.io',
-    plan: 'Enterprise',
-    status: 'Active',
-    billingCycle: 'Yearly',
-    amount: '₹49,999',
-    startDate: 'Jul 15, 2026',
-    renewalDate: 'Jul 15, 2027',
-    usage: { users: { current: 84, max: 200, percent: 42 }, events: { current: 18, max: 50, percent: 36 }, storage: { current: '85 GB', max: '500 GB', percent: 17 } },
-    history: [
-      { date: 'Jul 15, 2026', event: 'Enterprise agreement executed' },
-      { date: 'Jul 16, 2026', event: 'Annual wire payment received' }
-    ]
-  },
-  {
-    id: 'sub-3',
-    orgName: 'TechWorld Solutions',
-    email: 'contact@techworld.ai',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 22, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 2, max: 5, percent: 40 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '1 GB', max: '5 GB', percent: 20 } },
-    history: [{ date: 'Aug 22, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-4',
-    orgName: 'Global Connect',
-    email: 'ops@globalconnect.org',
-    plan: 'Pro',
-    status: 'Trial',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Sep 01, 2026',
-    renewalDate: 'Sep 30, 2026',
-    usage: { users: { current: 6, max: 50, percent: 12 }, events: { current: 2, max: 20, percent: 10 }, storage: { current: '4 GB', max: '50 GB', percent: 8 } },
-    history: [{ date: 'Sep 01, 2026', event: '14-Day Pro Trial initiated' }]
-  },
-  {
-    id: 'sub-5',
-    orgName: 'CloudScale Dynamics',
-    email: 'admin@cloudscale.net',
-    plan: 'Pro',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Aug 10, 2026',
-    renewalDate: 'Oct 10, 2026',
-    usage: { users: { current: 19, max: 50, percent: 38 }, events: { current: 6, max: 20, percent: 30 }, storage: { current: '22 GB', max: '50 GB', percent: 44 } },
-    history: [{ date: 'Aug 10, 2026', event: 'Pro tier activated' }, { date: 'Sep 10, 2026', event: 'Recurring invoice paid' }]
-  },
-  {
-    id: 'sub-6',
-    orgName: 'InnovateX Labs',
-    email: 'billing@innovatex.tech',
-    plan: 'Enterprise',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹14,999',
-    startDate: 'Jun 01, 2026',
-    renewalDate: 'Oct 01, 2026',
-    usage: { users: { current: 48, max: 200, percent: 24 }, events: { current: 12, max: 50, percent: 24 }, storage: { current: '64 GB', max: '500 GB', percent: 12.8 } },
-    history: [{ date: 'Jun 01, 2026', event: 'Monthly Enterprise billing started' }, { date: 'Sep 01, 2026', event: 'Automated card charge successful' }]
-  },
-  {
-    id: 'sub-7',
-    orgName: 'FutureTech AI',
-    email: 'finance@futuretech.ae',
-    plan: 'Enterprise',
-    status: 'Active',
-    billingCycle: 'Yearly',
-    amount: '₹49,999',
-    startDate: 'Jan 10, 2026',
-    renewalDate: 'Jan 10, 2027',
-    usage: { users: { current: 95, max: 200, percent: 47.5 }, events: { current: 24, max: 50, percent: 48 }, storage: { current: '140 GB', max: '500 GB', percent: 28 } },
-    history: [{ date: 'Jan 10, 2026', event: 'Annual subscription contract booked' }]
-  },
-  {
-    id: 'sub-8',
-    orgName: 'Horizon Media Group',
-    email: 'accounts@horizonmedia.net',
-    plan: 'Pro',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Jul 05, 2026',
-    renewalDate: 'Oct 05, 2026',
-    usage: { users: { current: 14, max: 50, percent: 28 }, events: { current: 5, max: 20, percent: 25 }, storage: { current: '16 GB', max: '50 GB', percent: 32 } },
-    history: [{ date: 'Jul 05, 2026', event: 'Pro subscription converted' }]
-  },
-  {
-    id: 'sub-9',
-    orgName: 'Global Summit Co',
-    email: 'info@globalsummit.com',
-    plan: 'Enterprise',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹14,999',
-    startDate: 'May 20, 2026',
-    renewalDate: 'Oct 20, 2026',
-    usage: { users: { current: 62, max: 200, percent: 31 }, events: { current: 15, max: 50, percent: 30 }, storage: { current: '110 GB', max: '500 GB', percent: 22 } },
-    history: [{ date: 'May 20, 2026', event: 'Enterprise agreement activated' }]
-  },
-  {
-    id: 'sub-10',
-    orgName: 'Alpha Enterprise Systems',
-    email: 'support@alphasys.co',
-    plan: 'Enterprise',
-    status: 'Expired',
-    billingCycle: 'Yearly',
-    amount: '₹49,999',
-    startDate: 'Aug 15, 2025',
-    renewalDate: 'Aug 15, 2026',
-    usage: { users: { current: 18, max: 200, percent: 9 }, events: { current: 4, max: 50, percent: 8 }, storage: { current: '25 GB', max: '500 GB', percent: 5 } },
-    history: [{ date: 'Aug 15, 2025', event: 'Contract established' }, { date: 'Aug 15, 2026', event: 'Contract expired without auto-renewal' }]
-  },
-  {
-    id: 'sub-11',
-    orgName: 'Quantum Innovations',
-    email: 'team@quantuminnovations.io',
-    plan: 'Pro',
-    status: 'Trial',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Sep 05, 2026',
-    renewalDate: 'Oct 05, 2026',
-    usage: { users: { current: 4, max: 50, percent: 8 }, events: { current: 1, max: 20, percent: 5 }, storage: { current: '3 GB', max: '50 GB', percent: 6 } },
-    history: [{ date: 'Sep 05, 2026', event: 'Trial environment deployed' }]
-  },
-  {
-    id: 'sub-12',
-    orgName: 'ByteCraft Technologies',
-    email: 'devops@bytecraft.io',
-    plan: 'Pro',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Aug 18, 2026',
-    renewalDate: 'Oct 18, 2026',
-    usage: { users: { current: 28, max: 50, percent: 56 }, events: { current: 9, max: 20, percent: 45 }, storage: { current: '34 GB', max: '50 GB', percent: 68 } },
-    history: [{ date: 'Aug 18, 2026', event: 'Pro subscription enabled' }]
-  },
-  {
-    id: 'sub-13',
-    orgName: 'SummitWave Events',
-    email: 'billing@summitwave.com',
-    plan: 'Pro',
-    status: 'Expired',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Jul 01, 2026',
-    renewalDate: 'Sep 01, 2026',
-    usage: { users: { current: 12, max: 50, percent: 24 }, events: { current: 3, max: 20, percent: 15 }, storage: { current: '10 GB', max: '50 GB', percent: 20 } },
-    history: [{ date: 'Jul 01, 2026', event: 'Subscribed to Pro' }, { date: 'Sep 01, 2026', event: 'Grace period ended, plan expired' }]
-  },
-  {
-    id: 'sub-14',
-    orgName: 'Luminary Conferences',
-    email: 'events@luminaryconf.com',
-    plan: 'Pro',
-    status: 'Trial',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Sep 12, 2026',
-    renewalDate: 'Oct 12, 2026',
-    usage: { users: { current: 8, max: 50, percent: 16 }, events: { current: 2, max: 20, percent: 10 }, storage: { current: '5 GB', max: '50 GB', percent: 10 } },
-    history: [{ date: 'Sep 12, 2026', event: 'Trial registered' }]
-  },
-  {
-    id: 'sub-15',
-    orgName: 'AgileCorp Media',
-    email: 'payments@agilecorp.com',
-    plan: 'Pro',
-    status: 'Active',
-    billingCycle: 'Monthly',
-    amount: '₹4,999',
-    startDate: 'Aug 25, 2026',
-    renewalDate: 'Oct 25, 2026',
-    usage: { users: { current: 21, max: 50, percent: 42 }, events: { current: 7, max: 20, percent: 35 }, storage: { current: '26 GB', max: '50 GB', percent: 52 } },
-    history: [{ date: 'Aug 25, 2026', event: 'Pro tier activated' }]
-  },
-  {
-    id: 'sub-16',
-    orgName: 'SyncSphere Labs',
-    email: 'contact@syncsphere.org',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 01, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 2, max: 5, percent: 40 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '0.8 GB', max: '5 GB', percent: 16 } },
-    history: [{ date: 'Aug 01, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-17',
-    orgName: 'DevPulse Global',
-    email: 'info@devpulse.io',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 05, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 3, max: 5, percent: 60 }, events: { current: 2, max: 2, percent: 100 }, storage: { current: '2.1 GB', max: '5 GB', percent: 42 } },
-    history: [{ date: 'Aug 05, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-18',
-    orgName: 'NextGen Horizons',
-    email: 'team@nextgenhorizons.com',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 12, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 1, max: 5, percent: 20 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '1.2 GB', max: '5 GB', percent: 24 } },
-    history: [{ date: 'Aug 12, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-19',
-    orgName: 'Pinnacle Gatherings',
-    email: 'admin@pinnaclegatherings.com',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 14, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 4, max: 5, percent: 80 }, events: { current: 2, max: 2, percent: 100 }, storage: { current: '3.4 GB', max: '5 GB', percent: 68 } },
-    history: [{ date: 'Aug 14, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-20',
-    orgName: 'CyberGuard Summit',
-    email: 'contact@cyberguardsummit.eu',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 19, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 2, max: 5, percent: 40 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '1.5 GB', max: '5 GB', percent: 30 } },
-    history: [{ date: 'Aug 19, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-21',
-    orgName: 'OrbitLink Systems',
-    email: 'hello@orbitlink.io',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 24, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 3, max: 5, percent: 60 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '2.0 GB', max: '5 GB', percent: 40 } },
-    history: [{ date: 'Aug 24, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-22',
-    orgName: 'EchoVentures Inc',
-    email: 'billing@echoventures.org',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Aug 29, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 1, max: 5, percent: 20 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '0.9 GB', max: '5 GB', percent: 18 } },
-    history: [{ date: 'Aug 29, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-23',
-    orgName: 'VectorCore Events',
-    email: 'ops@vectorcore.com',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Sep 02, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 2, max: 5, percent: 40 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '1.8 GB', max: '5 GB', percent: 36 } },
-    history: [{ date: 'Sep 02, 2026', event: 'Free tier activated' }]
-  },
-  {
-    id: 'sub-24',
-    orgName: 'DataStream Tech',
-    email: 'accounts@datastreamtech.io',
-    plan: 'Free',
-    status: 'Active',
-    billingCycle: '-',
-    amount: '₹0',
-    startDate: 'Sep 08, 2026',
-    renewalDate: '-',
-    usage: { users: { current: 3, max: 5, percent: 60 }, events: { current: 1, max: 2, percent: 50 }, storage: { current: '2.4 GB', max: '5 GB', percent: 48 } },
-    history: [{ date: 'Sep 08, 2026', event: 'Free tier activated' }]
-  }
-];
-
+const INITIAL_SUBSCRIPTIONS = [];
 
 const INITIAL_PLANS = [
   {
@@ -458,28 +138,110 @@ const INITIAL_PLANS = [
 const ITEMS_PER_PAGE = 10;
 
 const Subscriptions = () => {
-  const [subscriptions, setSubscriptions] = useState(INITIAL_SUBSCRIPTIONS);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [plans, setPlans] = useState(INITIAL_PLANS);
   const [editingPlan, setEditingPlan] = useState(null);
   const [planToast, setPlanToast] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSavePlan = (updatedPlan) => {
-    setPlans((prev) =>
-      prev.map((p) => {
-        if (p.id === updatedPlan.id) {
-          return updatedPlan;
+  const fetchSubscriptionsAndPlans = async () => {
+    setLoading(true);
+    try {
+      const [plansRes, orgsRes] = await Promise.allSettled([
+        subscriptionService.getPlans(),
+        subscriptionService.getOrganizations()
+      ]);
+
+      if (plansRes.status === 'fulfilled') {
+        const rawPlans = plansRes.value?.data?.plans || plansRes.value?.plans;
+        if (Array.isArray(rawPlans) && rawPlans.length > 0) {
+          setPlans(rawPlans.map(p => ({
+            id: p._id || p.id,
+            name: p.name,
+            tag: p.name === 'Enterprise' ? 'Full platform' : p.name === 'Pro' ? 'Growing teams' : 'Starter tier',
+            description: p.description || `For ${p.name.toLowerCase()} tier teams.`,
+            price: p.price,
+            currency: 'INR',
+            billingPeriod: p.billingPeriod || 'Monthly',
+            status: p.status === 'active' ? 'Active' : p.status,
+            isPopular: p.name === 'Pro',
+            limits: p.limits || {},
+            features: p.features || [],
+            settings: {
+              aiFeatures: p.features?.some(f => f.toLowerCase().includes('ai')) || false,
+              customBranding: p.features?.some(f => f.toLowerCase().includes('brand')) || false,
+              prioritySupport: p.features?.some(f => f.toLowerCase().includes('support')) || false
+            },
+            usage: {
+              organizations: p.subscriberCount || 0,
+              users: 0,
+              events: 0
+            }
+          })));
         }
-        if (updatedPlan.isPopular && p.isPopular) {
-          return { ...p, isPopular: false };
+      }
+
+      if (orgsRes.status === 'fulfilled') {
+        const rawSubs = orgsRes.value?.data?.subscriptions || orgsRes.value?.subscriptions;
+        if (Array.isArray(rawSubs)) {
+          setSubscriptions(rawSubs.map(s => ({
+            id: s.orgId || s._id,
+            orgId: s.orgId || s._id,
+            orgName: s.orgName,
+            email: s.email,
+            plan: s.plan || 'Free',
+            status: s.status === 'active' ? 'Active' : 'Suspended',
+            billingCycle: s.billingCycle || 'Monthly',
+            amount: s.plan === 'Enterprise' ? '₹14,999' : s.plan === 'Pro' ? '₹4,999' : '₹0',
+            startDate: new Date(s.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            renewalDate: s.renewalDate ? new Date(s.renewalDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Next Month',
+            usage: { users: { current: 1, max: 50, percent: 2 }, events: { current: 1, max: 20, percent: 5 }, storage: { current: '1 GB', max: '50 GB', percent: 2 } },
+            history: [{ date: 'Active', event: 'Organization active subscription' }]
+          })));
         }
-        return p;
-      })
-    );
-    setEditingPlan(null);
-    setPlanToast('✓ Subscription plan updated successfully.');
-    setTimeout(() => {
-      setPlanToast(null);
-    }, 3500);
+      }
+    } catch (err) {
+      console.error('Failed to load subscriptions from server:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscriptionsAndPlans();
+  }, []);
+
+  const handleSavePlan = async (updatedPlan) => {
+    try {
+      if (updatedPlan.id) {
+        await subscriptionService.updatePlan(updatedPlan.id, {
+          price: updatedPlan.price,
+          limits: updatedPlan.limits,
+          features: updatedPlan.features,
+          status: (updatedPlan.status || 'active').toLowerCase()
+        });
+      }
+      setPlans((prev) =>
+        prev.map((p) => {
+          if (p.id === updatedPlan.id) {
+            return updatedPlan;
+          }
+          if (updatedPlan.isPopular && p.isPopular) {
+            return { ...p, isPopular: false };
+          }
+          return p;
+        })
+      );
+      setEditingPlan(null);
+      setPlanToast('✓ Subscription plan updated successfully.');
+      setTimeout(() => {
+        setPlanToast(null);
+      }, 3500);
+    } catch (err) {
+      console.error('Failed to update plan:', err);
+      setPlanToast('Error updating plan on backend.');
+      setTimeout(() => setPlanToast(null), 3500);
+    }
   };
 
   const [search, setSearch] = useState('');
@@ -561,27 +323,32 @@ const Subscriptions = () => {
     setIsCancelModalOpen(true);
   };
 
-  const handleConfirmChangePlan = (id, newPlan) => {
-    setSubscriptions((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        let amount = s.amount;
-        if (newPlan === 'Free') amount = '₹0';
-        else if (newPlan === 'Pro') amount = '₹4,999';
-        else if (newPlan === 'Enterprise') amount = '₹14,999';
-        return {
-          ...s,
-          plan: newPlan,
-          amount: amount,
-          history: [
-            { date: 'Today, 2026', event: `Plan modified to ${newPlan}` },
-            ...(s.history || [])
-          ]
-        };
-      })
-    );
-    if (selectedSub && selectedSub.id === id) {
-      setSelectedSub((prev) => ({ ...prev, plan: newPlan }));
+  const handleConfirmChangePlan = async (id, newPlan) => {
+    try {
+      await subscriptionService.changeOrganizationPlan(id, newPlan);
+      setSubscriptions((prev) =>
+        prev.map((s) => {
+          if (s.id !== id) return s;
+          let amount = s.amount;
+          if (newPlan === 'Free') amount = '₹0';
+          else if (newPlan === 'Pro') amount = '₹4,999';
+          else if (newPlan === 'Enterprise') amount = '₹14,999';
+          return {
+            ...s,
+            plan: newPlan,
+            amount: amount,
+            history: [
+              { date: 'Today, 2026', event: `Plan modified to ${newPlan}` },
+              ...(s.history || [])
+            ]
+          };
+        })
+      );
+      if (selectedSub && selectedSub.id === id) {
+        setSelectedSub((prev) => ({ ...prev, plan: newPlan }));
+      }
+    } catch (err) {
+      console.error('Failed to change organization plan:', err);
     }
   };
 

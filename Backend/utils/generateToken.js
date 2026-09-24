@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 
 const generateToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL: process.env.JWT_SECRET is required to generate authentication tokens.');
+  }
+
   return jwt.sign(
     {
       id: user._id,
@@ -8,7 +12,7 @@ const generateToken = (user) => {
       role: user.role,
       organizationId: user.organizationId
     },
-    process.env.JWT_SECRET || 'eventforge_fallback_secret_2026',
+    process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 };

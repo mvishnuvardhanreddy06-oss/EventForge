@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Layers,
   ArrowRight,
   Shield,
   ShieldCheck,
@@ -25,7 +24,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,12 +33,9 @@ const Login = () => {
     setLoading(true);
     try {
       const user = await login(email, password);
-
-      // Authenticated user's actual role retrieved from backend / JWT session
       const actualRole = (user?.role || '').toUpperCase();
       const chosenRole = (selectedRole || '').toUpperCase();
 
-      // Strict security check: Selected role in frontend cannot override actual account role
       if (chosenRole && chosenRole !== actualRole) {
         logout();
         setError('Selected role does not match this account.');
@@ -48,7 +43,6 @@ const Login = () => {
         return;
       }
 
-      // Role-based redirects based on the authenticated user's actual backend role:
       switch (actualRole) {
         case 'ADMIN':
           navigate('/admin/dashboard');
@@ -87,240 +81,198 @@ const Login = () => {
   };
 
   return (
-    <div className="w-full max-w-[480px] mx-auto flex flex-col items-center">
-      {/* TOP BRANDING */}
-      <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25 mb-3 transition-transform hover:scale-105">
-          <Layers className="w-6 h-6" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          EventForge
-        </h1>
-        <p className="text-xs font-semibold text-slate-500 mt-1">
-          Enterprise Event Management Platform
+    <div className="w-full max-w-[460px] mx-auto flex flex-col items-center">
+      {/* Top Brand */}
+      <div className="text-center mb-6">
+        <Link to="/" className="inline-flex items-center justify-center gap-2 mb-2 group">
+          <i className="h-7 w-7 rounded-[7px_7px_7px_2px] bg-accent inline-block transition-transform group-hover:scale-105"></i>
+          <span className="text-3xl font-display font-bold tracking-tight text-ink">
+            EventForge
+          </span>
+        </Link>
+        <p className="text-sm font-medium text-muted">
+          All-in-one event management platform
         </p>
       </div>
 
-      {/* CENTERED LOGIN CARD */}
-      <div className="w-full bg-white rounded-[22px] border border-slate-200/80 shadow-xl shadow-slate-200/50 p-7 sm:p-9 transition-all">
-        {/* LOGIN HEADER */}
-        <div className="text-center mb-7">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Welcome Back
+      {/* Login Panel */}
+      <div className="panel w-full bg-surface border border-line text-ink shadow-lg p-6 sm:p-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-display font-bold text-ink tracking-tight">
+            Welcome back
           </h2>
-          <p className="text-xs text-slate-500 mt-1.5 font-medium">
-            Sign in to your EventForge account
+          <p className="text-xs text-muted mt-1 font-medium">
+            Sign in to continue to your workspace
           </p>
         </div>
 
-        {/* ERROR ALERT BOX */}
         {error && (
-          <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start space-x-2.5 text-rose-700 text-xs font-semibold animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+          <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-start space-x-2.5 text-rose-500 text-xs font-semibold animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* FORM */}
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* Role Selection Dropdown */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Login as
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">
+              Login role
             </label>
-            <div className="relative">
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full px-3.5 py-3 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none transition-all cursor-pointer"
-              >
-                <option value="ADMIN">Platform Admin</option>
-                <option value="ORGANIZER">Event Organizer</option>
-                <option value="STAFF">Event Staff</option>
-                <option value="SPEAKER">Speaker</option>
-                <option value="SPONSOR">Sponsor</option>
-                <option value="ATTENDEE">Attendee</option>
-              </select>
-            </div>
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="field cursor-pointer font-medium text-sm"
+            >
+              <option value="ADMIN">Platform Admin</option>
+              <option value="ORGANIZER">Event Organizer</option>
+              <option value="STAFF">Event Staff</option>
+              <option value="SPEAKER">Speaker</option>
+              <option value="SPONSOR">Sponsor</option>
+              <option value="ATTENDEE">Attendee</option>
+            </select>
           </div>
 
-          {/* Corporate Email Field */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Corporate Email
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">
+              Corporate email
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Mail className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your corporate email"
-                className="w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none transition-all"
+                placeholder="name@company.com"
+                className="field pl-9.5 text-sm"
               />
             </div>
           </div>
 
-          {/* Password Field */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-ink uppercase tracking-wider">
+                Password
+              </label>
+              <span className="text-[11px] text-accent hover:underline cursor-pointer">
+                Forgot password?
+              </span>
+            </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Lock className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none transition-all"
+                placeholder="••••••••••••"
+                className="field pl-9.5 pr-10 text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Remember / Forgot on single row */}
-          <div className="flex items-center justify-between pt-0.5">
-            <label className="flex items-center space-x-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span className="text-xs font-medium text-slate-600">Remember me</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => alert('Password reset instructions have been dispatched to your corporate administrator or registered email.')}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline focus:outline-none"
-            >
-              Forgot password?
-            </button>
-          </div>
-
-          {/* Sign In Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-[52px] bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="btn btn-primary w-full py-2.5 text-sm font-bold mt-2"
           >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Signing in...</span>
-              </>
-            ) : (
-              <>
-                <span>Sign In</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+            {loading ? 'Authenticating...' : 'Sign in to workspace'}
           </button>
         </form>
 
-        {/* Register link */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500 font-medium">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 font-bold hover:text-blue-700 hover:underline">
-              Register now
-            </Link>
-          </p>
+        <div className="mt-5 text-center text-xs text-muted">
+          <span>Don't have an account? </span>
+          <Link to="/register" className="font-semibold text-accent hover:underline">
+            Create account
+          </Link>
         </div>
 
         {/* Quick Demo Login Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
+            <div className="w-full border-t border-line" />
           </div>
-          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-slate-400">
-            <span className="bg-white px-3">Quick Demo Login</span>
+          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-muted">
+            <span className="bg-surface px-3">Quick Demo Login</span>
           </div>
         </div>
 
-        {/* 6 Demo Role Buttons: 2 columns on mobile, 3 columns on tablet/desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+        {/* 6 Demo Role Buttons */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
           <button
             type="button"
-            onClick={() => setTestRole('mvishnuvardhanreddy33@gmail.com', 'ADMIN')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            onClick={() => setTestRole('admin@eventforge.io', 'ADMIN')}
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Platform Admin"
           >
-            <Shield className="w-3.5 h-3.5 text-slate-600 group-hover:scale-110 transition-transform shrink-0" />
+            <Shield className="w-3.5 h-3.5 text-accent shrink-0" />
             <span>Admin</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setTestRole('organizer@nexus.io', 'ORGANIZER')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            onClick={() => setTestRole('organizer@apexevents.com', 'ORGANIZER')}
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Event Organizer"
           >
-            <Building2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform shrink-0" />
+            <Building2 className="w-3.5 h-3.5 text-accent shrink-0" />
             <span>Organizer</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setTestRole('staff1@eventforge.io', 'STAFF')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            onClick={() => setTestRole('staff1@apexevents.com', 'STAFF')}
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Event Staff"
           >
-            <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
+            <ClipboardCheck className="w-3.5 h-3.5 text-teal shrink-0" />
             <span>Staff</span>
           </button>
 
           <button
             type="button"
             onClick={() => setTestRole('speaker1@eventforge.io', 'SPEAKER')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Keynote Speaker"
           >
-            <Mic className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform shrink-0" />
+            <Mic className="w-3.5 h-3.5 text-gold shrink-0" />
             <span>Speaker</span>
           </button>
 
           <button
             type="button"
             onClick={() => setTestRole('sponsor1@eventforge.io', 'SPONSOR')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Corporate Sponsor"
           >
-            <Handshake className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform shrink-0" />
+            <Handshake className="w-3.5 h-3.5 text-gold shrink-0" />
             <span>Sponsor</span>
           </button>
 
           <button
             type="button"
             onClick={() => setTestRole('attendee1@example.com', 'ATTENDEE')}
-            className="px-2.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/90 text-slate-700 font-semibold border border-slate-200/80 flex items-center justify-center space-x-1.5 transition-all group"
+            className="px-2.5 py-2 rounded-xl bg-bg border border-line hover:border-accent text-ink font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
             title="Autofill Conference Attendee"
           >
-            <Ticket className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform shrink-0" />
+            <Ticket className="w-3.5 h-3.5 text-accent shrink-0" />
             <span>Attendee</span>
           </button>
         </div>
 
         {/* Security Indicator */}
-        <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-          <div className="inline-flex items-center justify-center space-x-1.5 text-xs font-semibold text-slate-600">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Secure Enterprise Access</span>
+        <div className="mt-5 pt-4 border-t border-line text-center">
+          <div className="inline-flex items-center justify-center space-x-1.5 text-xs font-semibold text-muted">
+            <ShieldCheck className="w-4 h-4 text-teal shrink-0" />
+            <span>Encrypted Corporate Workspace</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            256-bit Encryption • Role-Based Access
-          </p>
         </div>
       </div>
     </div>

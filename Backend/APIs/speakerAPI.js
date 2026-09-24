@@ -30,47 +30,26 @@ async function getSpeakerForUser(user) {
     }
   }
 
-  // If still not found, create a baseline profile linked to the user
+  // If still not found, create only a minimal legitimate baseline profile linked to the user
   if (!speaker) {
     speaker = await SpeakerModel.create({
       userId: user._id,
-      organizationId: user.organizationId || '66ef1a2b3c4d5e6f7a8b9c0d',
-      name: user.name || 'Keynote Speaker',
-      designation: 'Speaker & Industry Expert',
-      company: 'EventForge Speakers Network',
-      bio: 'Enterprise technology speaker and industry expert delivering keynotes and workshops.',
-      shortBio: 'Enterprise speaker and domain authority.',
-      phone: user.phone || '+91 98765 43210',
-      location: 'Hyderabad, India',
+      organizationId: user.organizationId || null,
+      name: user.name || 'Speaker',
+      email: user.email,
+      designation: 'Speaker',
+      company: '',
+      bio: '',
+      shortBio: '',
+      phone: user.phone || '',
+      location: user.location || '',
       country: 'India',
-      yearsExperience: 8,
-      industry: 'Technology & Enterprise Architecture',
-      expertise: user.interests && user.interests.length > 0 ? user.interests : ['Artificial Intelligence', 'Cloud Computing', 'Leadership'],
-      preferredSessionTypes: ['Keynote', 'Technical Talk', 'Workshop'],
-      weeklyAvailability: [
-        { day: 'Monday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-        { day: 'Tuesday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-        { day: 'Wednesday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-        { day: 'Thursday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-        { day: 'Friday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-        { day: 'Saturday', available: false, startTime: '10:00 AM', endTime: '02:00 PM' },
-        { day: 'Sunday', available: false, startTime: '10:00 AM', endTime: '02:00 PM' }
-      ]
+      yearsExperience: 0,
+      industry: '',
+      expertise: user.interests && user.interests.length > 0 ? user.interests : [],
+      preferredSessionTypes: [],
+      weeklyAvailability: []
     });
-  }
-
-  // Ensure weekly availability array is populated
-  if (!speaker.weeklyAvailability || speaker.weeklyAvailability.length === 0) {
-    speaker.weeklyAvailability = [
-      { day: 'Monday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-      { day: 'Tuesday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-      { day: 'Wednesday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-      { day: 'Thursday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-      { day: 'Friday', available: true, startTime: '09:00 AM', endTime: '06:00 PM' },
-      { day: 'Saturday', available: false, startTime: '10:00 AM', endTime: '02:00 PM' },
-      { day: 'Sunday', available: false, startTime: '10:00 AM', endTime: '02:00 PM' }
-    ];
-    await speaker.save();
   }
 
   return speaker;
@@ -112,7 +91,7 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN),
 
     const now = new Date();
     const eventIds = [...new Set(sessions.map(s => s.eventId?._id?.toString()).filter(Boolean))];
-    const upcomingEventsCount = eventIds.length || 1;
+    const upcomingEventsCount = eventIds.length;
 
     const upcomingSessions = sessions.filter(s => new Date(s.endTime) >= now && s.status !== 'cancelled');
     const upcomingSessionsCount = upcomingSessions.length;
@@ -126,51 +105,48 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN),
     });
 
     // Determine Next Session
-    const nextSessionDoc = upcomingSessions[0] || sessions[0] || null;
+    const nextSessionDoc = upcomingSessions[0] || null;
     let nextSession = null;
     if (nextSessionDoc) {
       nextSession = {
         _id: nextSessionDoc._id,
         title: nextSessionDoc.title,
-        eventTitle: nextSessionDoc.eventId?.title || 'Global Tech Leadership Summit 2026',
-        date: nextSessionDoc.startTime ? new Date(nextSessionDoc.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'September 24, 2026',
+        eventTitle: nextSessionDoc.eventId?.title || 'Event Session',
+        date: nextSessionDoc.startTime ? new Date(nextSessionDoc.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '',
         time: nextSessionDoc.startTime && nextSessionDoc.endTime
           ? `${new Date(nextSessionDoc.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${new Date(nextSessionDoc.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-          : '10:00 AM – 11:00 AM',
-        venue: nextSessionDoc.roomName || 'Hall A',
-        role: nextSessionDoc.category || 'Keynote Speaker',
+          : '',
+        venue: nextSessionDoc.roomName || nextSessionDoc.venueId?.name || '',
+        role: nextSessionDoc.category || 'Speaker',
         status: nextSessionDoc.speakerConfirmationStatus || 'Confirmed',
         hasPresentation: Boolean(nextSessionDoc.materials && nextSessionDoc.materials.length > 0)
       };
     }
 
-    // Build Today's Schedule timeline
-    const todaySchedule = [
-      {
-        time: '09:00 AM',
-        title: 'Speaker Check-in & VIP Breakfast',
-        venue: 'Speaker Green Room / Lounge',
-        status: 'Completed'
-      },
-      {
-        time: nextSession ? nextSession.time.split('–')[0].trim() : '10:00 AM',
-        title: nextSession ? nextSession.title : 'AI Infrastructure at Scale',
-        venue: nextSession ? nextSession.venue : 'Hall A',
-        status: 'Live'
-      },
-      {
-        time: '02:00 PM',
-        title: 'Executive Roundtable & AI Panel Handover',
-        venue: 'Executive Boardroom B',
-        status: 'Upcoming'
-      },
-      {
-        time: '04:30 PM',
-        title: 'Speaker Networking Reception & Book Signing',
-        venue: 'Exhibition Hall VIP Terrace',
-        status: 'Upcoming'
-      }
-    ];
+    // Build Today's Schedule timeline from actual sessions scheduled today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const todaySessions = sessions.filter(s => {
+      const st = new Date(s.startTime);
+      return st >= todayStart && st <= todayEnd;
+    });
+
+    const todaySchedule = todaySessions.map(s => {
+      const st = new Date(s.startTime);
+      const et = new Date(s.endTime);
+      let sessionStatus = 'Upcoming';
+      if (now >= st && now <= et) sessionStatus = 'Live';
+      else if (now > et) sessionStatus = 'Completed';
+
+      return {
+        time: st.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        title: s.title,
+        venue: s.roomName || s.venueId?.name || 'TBA',
+        status: sessionStatus
+      };
+    });
 
     // Determine pending actions
     const pendingActions = [];
@@ -212,37 +188,13 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN),
       eventId: { $in: eventIds }
     }).sort({ publishedAt: -1 }).limit(3);
 
-    const recentAnnouncements = announcements.length > 0
-      ? announcements.map(a => ({
-          _id: a._id,
-          title: a.title,
-          message: a.message,
-          publishedAt: a.publishedAt,
-          priority: a.priority || 'medium'
-        }))
-      : [
-          {
-            _id: 'ann-1',
-            title: 'Session room changed to Hall A',
-            message: 'Due to overwhelming attendee RSVPs, keynote sessions have moved to Grand Hall A.',
-            publishedAt: new Date(Date.now() - 3600000),
-            priority: 'urgent'
-          },
-          {
-            _id: 'ann-2',
-            title: 'Presentation upload deadline extended',
-            message: 'Speakers may upload revised slides until 8:00 AM on the day of the summit.',
-            publishedAt: new Date(Date.now() - 7200000),
-            priority: 'medium'
-          },
-          {
-            _id: 'ann-3',
-            title: 'Speaker briefing starts at 8:30 AM',
-            message: 'Please meet the AV production director in the Green Room for microphone checks.',
-            publishedAt: new Date(Date.now() - 14400000),
-            priority: 'high'
-          }
-        ];
+    const recentAnnouncements = announcements.map(a => ({
+      _id: a._id,
+      title: a.title,
+      message: a.message,
+      publishedAt: a.publishedAt,
+      priority: a.priority || 'medium'
+    }));
 
     res.status(200).json({
       success: true,
@@ -258,22 +210,12 @@ router.get('/me/dashboard', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN),
         },
         metrics: {
           upcomingEvents: upcomingEventsCount,
-          upcomingSessions: upcomingSessionsCount || 3,
-          presentations: presentationsCount || 2,
-          pendingActions: pendingActions.length || 2
+          upcomingSessions: upcomingSessionsCount,
+          presentations: presentationsCount,
+          pendingActions: pendingActions.length
         },
         todaySchedule,
-        nextSession: nextSession || {
-          _id: 'demo-next-session',
-          title: 'AI Infrastructure at Scale',
-          eventTitle: 'Global Tech Leadership Summit 2026',
-          date: 'September 24, 2026',
-          time: '10:00 AM – 11:00 AM',
-          venue: 'Hall A',
-          role: 'Keynote Speaker',
-          status: 'Confirmed',
-          hasPresentation: true
-        },
+        nextSession: nextSession || null,
         pendingActions,
         recentAnnouncements
       }
@@ -311,31 +253,12 @@ router.get('/me/events', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN), as
     let eventList = [];
     const now = new Date();
 
-    if (eventMap.size === 0) {
-      // Provide active summit event so speaker always has their confirmed event context
-      const defaultEvent = await EventModel.findOne({ status: 'published' }).populate('venueId');
-      if (defaultEvent) {
-        eventList.push({
-          _id: defaultEvent._id,
-          title: defaultEvent.title,
-          description: defaultEvent.description,
-          startDate: defaultEvent.startDate,
-          endDate: defaultEvent.endDate,
-          venueName: defaultEvent.venueId?.name || 'Hyderabad International Convention Centre',
-          city: defaultEvent.venueId?.city || 'Hyderabad',
-          status: 'Confirmed',
-          speakerRole: 'Keynote Speaker',
-          sessionsCount: 3,
-          sessions: sessions
-        });
-      }
-    } else {
-      eventMap.forEach(({ event, sessions: evSessions }) => {
-        let eventStatus = 'Upcoming';
-        const start = new Date(event.startDate);
-        const end = new Date(event.endDate);
-        if (now >= start && now <= end) eventStatus = 'Live';
-        else if (now > end) eventStatus = 'Completed';
+    eventMap.forEach(({ event, sessions: evSessions }) => {
+      let eventStatus = 'Upcoming';
+      const start = new Date(event.startDate);
+      const end = new Date(event.endDate);
+      if (now >= start && now <= end) eventStatus = 'Live';
+      else if (now > end) eventStatus = 'Completed';
 
         eventList.push({
           _id: event._id,
@@ -358,7 +281,6 @@ router.get('/me/events', verifyToken, verifyRole(ROLES.SPEAKER, ROLES.ADMIN), as
           }))
         });
       });
-    }
 
     // Apply Search
     if (search) {
@@ -1106,7 +1028,7 @@ router.get('/', async (req, res, next) => {
       ];
     }
 
-    const speakers = await SpeakerModel.find(query).sort({ name: 1 });
+    const speakers = await SpeakerModel.find(query).select('-phone').sort({ name: 1 });
     res.status(200).json({
       success: true,
       message: 'Speakers retrieved successfully',
@@ -1120,7 +1042,7 @@ router.get('/', async (req, res, next) => {
 // GET /api/speakers/:id
 router.get('/:id', async (req, res, next) => {
   try {
-    const speaker = await SpeakerModel.findById(req.params.id).populate('userId', 'email');
+    const speaker = await SpeakerModel.findById(req.params.id).select('-phone').populate('userId', 'email');
     if (!speaker) return res.status(404).json({ success: false, message: 'Speaker not found' });
 
     const sessions = await SessionModel.find({ speakerId: speaker._id }).populate('eventId', 'title startDate endDate');

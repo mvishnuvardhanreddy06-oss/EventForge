@@ -93,7 +93,7 @@ const AuthenticatedAppLayout = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-bg text-ink font-sans transition-colors duration-200">
       <Navbar />
       <div className="flex-1 flex min-w-0 overflow-x-hidden">
         {user && <Sidebar />}

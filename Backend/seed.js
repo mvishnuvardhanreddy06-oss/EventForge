@@ -138,6 +138,7 @@ const seedDatabase = async () => {
         name: 'Dr. Priya Sharma',
         designation: 'VP of AI Research',
         company: 'DeepNeural Labs',
+        profileImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop',
         bio: 'Recognized innovator in autonomous agentic workflows, multi-modal reasoning models, and enterprise AI orchestration.',
         expertise: ['Artificial Intelligence', 'Machine Learning', 'Data Science'],
         socialLinks: { twitter: 'https://twitter.com/priyasharma', linkedin: 'https://linkedin.com/in/priyasharma' }
@@ -146,6 +147,7 @@ const seedDatabase = async () => {
         name: 'Michael Vance',
         designation: 'Chief Cloud Architect',
         company: 'HyperScale Cloud',
+        profileImage: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Sundar_pichai.png',
         bio: 'Pioneered zero-downtime multi-region Kubernetes clusters handling over 500 million daily telemetry events.',
         expertise: ['Cloud Computing', 'DevOps', 'Distributed Systems'],
         socialLinks: { twitter: 'https://twitter.com/mvance', github: 'https://github.com/mvance' }
@@ -154,6 +156,7 @@ const seedDatabase = async () => {
         name: 'Samantha Ray',
         designation: 'Chief Information Security Officer',
         company: 'CyberShield Global',
+        profileImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop',
         bio: 'Keynote speaker on Zero Trust enterprise architectures, cloud workload defense, and proactive threat intelligence.',
         expertise: ['Cybersecurity', 'Zero Trust', 'Governance'],
         socialLinks: { linkedin: 'https://linkedin.com/in/samantharay' }
@@ -162,6 +165,7 @@ const seedDatabase = async () => {
         name: 'Vikram Malhotra',
         designation: 'Head of Web Engineering',
         company: 'NextGen Interfaces',
+        profileImage: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg',
         bio: 'Author of progressive web framework standards and micro-frontend patterns powering Fortune 100 portals.',
         expertise: ['Web Development', 'Frontend Architecture', 'Performance'],
         socialLinks: { github: 'https://github.com/vmalhotra' }
@@ -170,6 +174,7 @@ const seedDatabase = async () => {
         name: 'Claire Beauchamp',
         designation: 'Managing Director & VC',
         company: 'Horizon Ventures',
+        profileImage: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Sam_Altman_TechCrunch_Disrupt_2019_%28cropped%29.jpg',
         bio: 'Venture investor backing high-growth B2B enterprise software, developer infrastructure, and fintech innovations.',
         expertise: ['Business', 'Startups', 'Leadership'],
         socialLinks: { twitter: 'https://twitter.com/claireb', linkedin: 'https://linkedin.com/in/clairebeauchamp' }
@@ -185,6 +190,7 @@ const seedDatabase = async () => {
         password: defaultPassword,
         role: ROLES.SPEAKER,
         organizationId: org1._id,
+        profileImage: spData.profileImage,
         interests: spData.expertise
       });
 
@@ -194,6 +200,7 @@ const seedDatabase = async () => {
         name: spData.name,
         designation: spData.designation,
         company: spData.company,
+        profileImage: spData.profileImage,
         bio: spData.bio,
         expertise: spData.expertise,
         socialLinks: spData.socialLinks,
@@ -209,16 +216,16 @@ const seedDatabase = async () => {
     // 6. Sponsors (10)
     console.log('Creating 10 Corporate Sponsors...');
     const sponsorCompanies = [
-      { name: 'Google Cloud', contact: 'Rachel Adams', email: 'cloud-events@google.com', website: 'https://cloud.google.com' },
-      { name: 'Microsoft Azure', contact: 'James Wilson', email: 'azure-partner@microsoft.com', website: 'https://azure.microsoft.com' },
-      { name: 'Amazon Web Services', contact: 'Tara Singh', email: 'aws-summits@amazon.com', website: 'https://aws.amazon.com' },
-      { name: 'NVIDIA Corporation', contact: 'Leon Scott', email: 'enterprise@nvidia.com', website: 'https://nvidia.com' },
-      { name: 'Snowflake', contact: 'Maria Garcia', email: 'sponsorships@snowflake.com', website: 'https://snowflake.com' },
-      { name: 'Databricks', contact: 'Kevin Thorne', email: 'events@databricks.com', website: 'https://databricks.com' },
-      { name: 'Stripe', contact: 'Chloe Dupont', email: 'growth@stripe.com', website: 'https://stripe.com' },
-      { name: 'Twilio', contact: 'Daniel Lee', email: 'dev-relations@twilio.com', website: 'https://twilio.com' },
-      { name: 'MongoDB Inc.', contact: 'Sunita Rao', email: 'partnerships@mongodb.com', website: 'https://mongodb.com' },
-      { name: 'GitHub', contact: 'Peter Jackson', email: 'sponsors@github.com', website: 'https://github.com' }
+      { name: 'Google Cloud', contact: 'Rachel Adams', email: 'cloud-events@google.com', website: 'https://cloud.google.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
+      { name: 'Microsoft Azure', contact: 'James Wilson', email: 'azure-partner@microsoft.com', website: 'https://azure.microsoft.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg' },
+      { name: 'Amazon Web Services', contact: 'Tara Singh', email: 'aws-summits@amazon.com', website: 'https://aws.amazon.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg' },
+      { name: 'NVIDIA Corporation', contact: 'Leon Scott', email: 'enterprise@nvidia.com', website: 'https://nvidia.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg' },
+      { name: 'Snowflake', contact: 'Maria Garcia', email: 'sponsorships@snowflake.com', website: 'https://snowflake.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Snowflake_Inc._logo.svg' },
+      { name: 'Databricks', contact: 'Kevin Thorne', email: 'events@databricks.com', website: 'https://databricks.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/63/Databricks_Logo.png' },
+      { name: 'Stripe', contact: 'Chloe Dupont', email: 'growth@stripe.com', website: 'https://stripe.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg' },
+      { name: 'Twilio', contact: 'Daniel Lee', email: 'dev-relations@twilio.com', website: 'https://twilio.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Twilio-logo-red.svg' },
+      { name: 'MongoDB Inc.', contact: 'Sunita Rao', email: 'partnerships@mongodb.com', website: 'https://mongodb.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg' },
+      { name: 'GitHub', contact: 'Peter Jackson', email: 'sponsors@github.com', website: 'https://github.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/GitHub_Invertocat_Logo.svg' }
     ];
 
     const sponsorUsers = [];
@@ -314,6 +321,7 @@ const seedDatabase = async () => {
       capacity: 500,
       registrationRequired: true,
       status: EVENT_STATUS.PUBLISHED,
+      assignedStaff: [staffMembers[0]._id, staffMembers[2]._id],
       tags: ['AI', 'Cloud', 'Machine Learning', 'DevOps', 'Agents']
     });
 
@@ -331,6 +339,7 @@ const seedDatabase = async () => {
       registrationEnd: new Date(now.getTime() + 29 * dayMs),
       capacity: 350,
       status: EVENT_STATUS.PUBLISHED,
+      assignedStaff: [staffMembers[1]._id, staffMembers[3]._id],
       tags: ['FinTech', 'Banking', 'Cybersecurity', 'Compliance']
     });
 
@@ -348,6 +357,7 @@ const seedDatabase = async () => {
       registrationEnd: new Date(now.getTime() + 1 * dayMs),
       capacity: 400,
       status: EVENT_STATUS.ONGOING,
+      assignedStaff: [staffMembers[0]._id],
       tags: ['DevOps', 'Kubernetes', 'CI/CD', 'PlatformEngineering']
     });
 
@@ -376,46 +386,76 @@ const seedDatabase = async () => {
       eventType: 'Workshop',
       category: 'Web Development',
       venueId: venue1._id,
-      startDate: new Date(now.getTime() - 20 * dayMs),
-      endDate: new Date(now.getTime() - 18 * dayMs),
-      registrationStart: new Date(now.getTime() - 50 * dayMs),
-      registrationEnd: new Date(now.getTime() - 21 * dayMs),
+      startDate: new Date(now.getTime() + 10 * dayMs),
+      endDate: new Date(now.getTime() + 12 * dayMs),
+      registrationStart: new Date(now.getTime() - 10 * dayMs),
+      registrationEnd: new Date(now.getTime() + 9 * dayMs),
       capacity: 300,
-      status: EVENT_STATUS.COMPLETED,
+      status: EVENT_STATUS.PUBLISHED,
+      assignedStaff: [staffMembers[0]._id, staffMembers[2]._id],
       tags: ['Web Development', 'React', 'Frontend', 'Edge']
     });
 
-    // 10. Sponsorship Packages & Sponsors for Event 1
+    // Update staff user documents with explicit event assignments
+    staffMembers[0].assignedEvents = [event1._id, event3._id, event5._id];
+    await staffMembers[0].save();
+    staffMembers[1].assignedEvents = [event2._id];
+    await staffMembers[1].save();
+    staffMembers[2].assignedEvents = [event1._id, event5._id];
+    await staffMembers[2].save();
+    staffMembers[3].assignedEvents = [event2._id];
+    await staffMembers[3].save();
+
+    // 10. Sponsorship Packages & Sponsors for All Events
     console.log('Creating Sponsorship Packages and Assigning Sponsors...');
-    const pkgPlatinum = await SponsorshipPackageModel.create({
-      eventId: event1._id,
-      name: 'Platinum Tier Partner',
-      price: 25000,
-      description: 'Maximum brand presence, opening keynote co-sponsorship, and prime 40x40 exhibition booth.',
-      benefits: ['Opening Keynote Mention', 'Prime Booth Space', '20 All-Access VIP Passes', 'Logo on All Media'],
-      availableSlots: 3,
-      status: 'active'
-    });
+    const allSeedEvents = [event1, event2, event3, event4, event5];
+    const createdPackagesMap = {};
 
-    const pkgGold = await SponsorshipPackageModel.create({
-      eventId: event1._id,
-      name: 'Gold Tier Partner',
-      price: 15000,
-      description: 'Featured break-out session sponsor and prominent placement on attendee swag bags.',
-      benefits: ['Breakout Room Sponsor', '10 VIP Passes', 'Logo on Website & App'],
-      availableSlots: 5,
-      status: 'active'
-    });
+    for (const ev of allSeedEvents) {
+      const p1 = await SponsorshipPackageModel.create({
+        eventId: ev._id,
+        name: 'Platinum Tier Partner',
+        price: 250000,
+        description: 'Maximum brand presence, opening keynote co-sponsorship, and prime 40x40 exhibition booth.',
+        benefits: ['Opening Keynote Mention', 'Prime Booth Space', '20 All-Access VIP Passes', 'Logo on All Media'],
+        availableSlots: 3,
+        status: 'active'
+      });
 
-    const pkgSilver = await SponsorshipPackageModel.create({
-      eventId: event1._id,
-      name: 'Silver Tier Partner',
-      price: 8000,
-      description: 'Entry-level partner package with dedicated networking kiosk and directory listing.',
-      benefits: ['Networking Kiosk', '5 Passes', 'Directory Profile'],
-      availableSlots: 10,
-      status: 'active'
-    });
+      const p2 = await SponsorshipPackageModel.create({
+        eventId: ev._id,
+        name: 'Gold Tier Partner',
+        price: 150000,
+        description: 'Featured break-out session sponsor and prominent placement on attendee swag bags.',
+        benefits: ['Breakout Room Sponsor', '10 VIP Passes', 'Logo on Website & App'],
+        availableSlots: 5,
+        status: 'active'
+      });
+
+      const p3 = await SponsorshipPackageModel.create({
+        eventId: ev._id,
+        name: 'Silver Tier Partner',
+        price: 75000,
+        description: 'Entry-level partner package with dedicated networking kiosk and directory listing.',
+        benefits: ['Networking Kiosk', '5 Passes', 'Directory Profile'],
+        availableSlots: 10,
+        status: 'active'
+      });
+
+      const p4 = await SponsorshipPackageModel.create({
+        eventId: ev._id,
+        name: 'Bronze / Startup Partner',
+        price: 35000,
+        description: 'Designed for emerging startups and innovators seeking visibility with enterprise leaders.',
+        benefits: ['Startup Demo Table', '2 Passes', 'Event App Directory Listing'],
+        availableSlots: 15,
+        status: 'active'
+      });
+
+      createdPackagesMap[ev._id.toString()] = [p1, p2, p3, p4];
+    }
+
+    const [pkgPlatinum, pkgGold, pkgSilver, pkgBronze] = createdPackagesMap[event1._id.toString()];
 
     const sponsorDocs = [];
     for (let i = 0; i < sponsorCompanies.length; i++) {
@@ -429,10 +469,11 @@ const seedDatabase = async () => {
         contactPerson: sc.contact,
         email: sc.email,
         website: sc.website,
+        logo: sc.logo || '',
         packageId: pkg._id,
         status: 'approved',
         brandAssets: [
-          { name: `${sc.name} Vector Logo`, fileUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400', assetType: 'logo' }
+          { name: `${sc.name} Vector Logo`, fileUrl: sc.logo || 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', assetType: 'logo' }
         ]
       });
       sponsorDocs.push(sponsor);
@@ -607,6 +648,107 @@ const seedDatabase = async () => {
 
     // Populate attendee 1 personal schedule with sample sessions
     await UserModel.findByIdAndUpdate(attendeeDocs[0]._id, { personalSchedule: [session1._id, session2._id] });
+
+    // Sessions for Event 5 (Modern Web Architectures Forum)
+    console.log('Creating Sessions for Event 5 (Modern Web Architectures Forum)...');
+    const event5Day = new Date(event5.startDate);
+    const startH5 = (h, m = 0) => new Date(new Date(event5Day).setHours(h, m, 0, 0));
+
+    const session5_1 = await SessionModel.create({
+      eventId: event5._id,
+      venueId: venue1._id,
+      roomId: 'room-alpha-2',
+      roomName: 'Main Stage Alpha',
+      speakerId: speakerDocs[3]._id, // Vikram Malhotra - Head of Web Engineering
+      title: 'High-Performance React Server Components at Scale',
+      description: 'Production strategies for streaming SSR, hybrid edge hydration, and eliminating client bundle bloat.',
+      category: 'Web Development',
+      startTime: startH5(10, 0),
+      endTime: startH5(11, 15),
+      capacity: 300,
+      tags: ['React', 'Next.js', 'Performance']
+    });
+
+    const session5_2 = await SessionModel.create({
+      eventId: event5._id,
+      venueId: venue1._id,
+      roomId: 'room-beta-3',
+      roomName: 'Architecture Lab B',
+      speakerId: speakerDocs[3]._id,
+      title: 'Next-Generation WebAssembly & Edge Microservices',
+      description: 'Running native C++ and Rust workloads directly in browser threads and low-latency edge workers.',
+      category: 'Web Development',
+      startTime: startH5(11, 30),
+      endTime: startH5(12, 45),
+      capacity: 200,
+      tags: ['WebAssembly', 'Edge', 'Rust']
+    });
+
+    const session5_3 = await SessionModel.create({
+      eventId: event5._id,
+      venueId: venue1._id,
+      roomId: 'room-lab-4',
+      roomName: 'Workshop Studio 4',
+      speakerId: speakerDocs[1]._id, // Michael Vance
+      title: 'Design Systems Architecture for Multi-Brand Enterprise',
+      description: 'Tokens, headless UI primitives, and cross-framework component libraries for distributed teams.',
+      category: 'Frontend Architecture',
+      startTime: startH5(14, 0),
+      endTime: startH5(15, 30),
+      capacity: 150,
+      tags: ['Design Systems', 'CSS', 'Tokens']
+    });
+
+    // Create Tickets & Registrations for Event 5
+    const ticketEvent5 = await TicketModel.create({
+      eventId: event5._id,
+      name: 'Web Forum All-Access Pass',
+      description: 'Access to all keynotes, breakout tracks, and technical labs.',
+      price: 199,
+      quantity: 150,
+      sold: 10,
+      remaining: 140,
+      saleStart: new Date(now.getTime() - 10 * dayMs),
+      saleEnd: new Date(now.getTime() + 9 * dayMs),
+      status: 'active'
+    });
+
+    // Register attendee 1, 2, 3 for event 5
+    await RegistrationModel.create({
+      registrationNumber: 'EF-2026-5001',
+      eventId: event5._id,
+      attendeeId: attendeeDocs[0]._id,
+      ticketId: ticketEvent5._id,
+      qrToken: 'EFQR-5001-' + attendeeDocs[0]._id.toString().slice(-8),
+      qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=EFQR-5001-' + attendeeDocs[0]._id.toString().slice(-8),
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      checkedIn: false
+    });
+
+    await RegistrationModel.create({
+      registrationNumber: 'EF-2026-5002',
+      eventId: event5._id,
+      attendeeId: attendeeDocs[1]._id,
+      ticketId: ticketEvent5._id,
+      qrToken: 'EFQR-5002-' + attendeeDocs[1]._id.toString().slice(-8),
+      qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=EFQR-5002-' + attendeeDocs[1]._id.toString().slice(-8),
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      checkedIn: false
+    });
+
+    await RegistrationModel.create({
+      registrationNumber: 'EF-2026-5003',
+      eventId: event5._id,
+      attendeeId: attendeeDocs[2]._id,
+      ticketId: ticketEvent5._id,
+      qrToken: 'EFQR-5003-' + attendeeDocs[2]._id.toString().slice(-8),
+      qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=EFQR-5003-' + attendeeDocs[2]._id.toString().slice(-8),
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      checkedIn: false
+    });
 
     // 13. Coupons
     console.log('Creating Coupons...');

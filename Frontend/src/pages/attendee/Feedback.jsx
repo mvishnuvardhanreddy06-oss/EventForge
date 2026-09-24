@@ -39,8 +39,46 @@ const Feedback = () => {
   useEffect(() => {
     const fetchInitial = async () => {
       try {
-        const evRes = await attendeePortalService.getEvents();
-        const evList = evRes.data?.data?.events || [];
+        let evList = [];
+        // 1. Fetch available feedback events (registered events for the attendee)
+        try {
+          const availRes = await attendeePortalService.getAvailableFeedback();
+          const availData = availRes?.data?.availableEvents || availRes?.availableEvents || availRes?.data || [];
+          if (Array.isArray(availData) && availData.length > 0) {
+            evList = availData
+              .filter(a => a && (a.eventId || a._id))
+              .map(a => ({
+                _id: String(a.eventId?._id || a.eventId || a._id),
+                title: a.title || a.eventId?.title || 'Conference Event',
+                hasSubmitted: Boolean(a.hasSubmitted)
+              }));
+          }
+        } catch (e) {
+          console.warn('Could not fetch registered feedback events:', e);
+        }
+
+        // 2. Also fetch all published conference events to ensure full catalogue is available
+        try {
+          const evRes = await attendeePortalService.getEvents();
+          const rawEvents = evRes?.data?.events || evRes?.events || evRes?.data?.data?.events || (Array.isArray(evRes?.data) ? evRes.data : []);
+          if (Array.isArray(rawEvents) && rawEvents.length > 0) {
+            const existingIds = new Set(evList.map(e => e._id));
+            rawEvents.forEach(e => {
+              const id = String(e._id || e.id || '');
+              if (id && !existingIds.has(id)) {
+                evList.push({
+                  _id: id,
+                  title: e.title || 'Conference Event',
+                  hasSubmitted: false
+                });
+                existingIds.add(id);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Could not fetch all events for feedback:', e);
+        }
+
         if (evList.length > 0) {
           setEvents(evList);
           const firstId = evList[0]._id;
@@ -57,13 +95,17 @@ const Feedback = () => {
   }, []);
 
   const loadSessionsForEvent = async (eventId) => {
+    if (!eventId) {
+      setSessions([]);
+      return;
+    }
     try {
       const sRes = await sessionService.getAll({ eventId });
-      if (sRes.data?.sessions || sRes.data?.data?.sessions) {
-        setSessions(sRes.data?.sessions || sRes.data?.data?.sessions);
-      }
+      const sList = sRes?.data?.sessions || sRes?.sessions || sRes?.data?.data?.sessions || (Array.isArray(sRes?.data) ? sRes.data : []);
+      setSessions(Array.isArray(sList) ? sList : []);
     } catch (err) {
       console.error('Failed to load sessions:', err);
+      setSessions([]);
     }
   };
 
@@ -99,7 +141,7 @@ const Feedback = () => {
       };
 
       const res = await attendeePortalService.submitFeedback(payload);
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setMessage({
           type: 'success',
           text: 'Thank you! Your verified conference review and ratings have been submitted.'
@@ -108,10 +150,14 @@ const Feedback = () => {
         setLikedAspects('');
         setImprovements('');
       } else {
-        setMessage({ type: 'error', text: res.data?.message || 'Failed to submit review.' });
+        setMessage({ type: 'error', text: res?.message || res?.data?.message || 'Failed to submit review.' });
       }
     } catch (err) {
-      if (err.response?.status === 409) {
+      const isDuplicate = err.status === 409 ||
+        err.response?.status === 409 ||
+        (err.message && err.message.toLowerCase().includes('already submitted'));
+
+      if (isDuplicate) {
         setMessage({
           type: 'error',
           text: 'You have already submitted a review for this event session. Duplicate reviews are prevented.'
@@ -194,9 +240,15 @@ const Feedback = () => {
                 onChange={handleEventChange}
                 className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-semibold focus:outline-none"
               >
-                {events.map((ev) => (
-                  <option key={ev._id} value={ev._id}>{ev.title}</option>
-                ))}
+                {events.length === 0 ? (
+                  <option value="">No events available</option>
+                ) : (
+                  events.map((ev) => (
+                    <option key={ev._id} value={ev._id}>
+                      {ev.title} {ev.hasSubmitted ? '✓ (Submitted)' : ''}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

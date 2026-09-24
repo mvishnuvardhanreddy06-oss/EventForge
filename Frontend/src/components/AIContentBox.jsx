@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy, Check, RefreshCw, Edit3, ArrowRight, Sparkles } from 'lucide-react';
 
 const AIContentBox = ({ content, onRegenerate, onUseContent, loading = false }) => {
@@ -6,7 +6,7 @@ const AIContentBox = ({ content, onRegenerate, onUseContent, loading = false }) 
   const [isEditing, setIsEditing] = useState(false);
   const [editableText, setEditableText] = useState(content || '');
 
-  React.useEffect(() => {
+  useEffect(() => {
     setEditableText(content || '');
   }, [content]);
 

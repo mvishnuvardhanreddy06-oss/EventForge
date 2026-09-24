@@ -31,7 +31,13 @@ export const AuthProvider = ({ children }) => {
     fetchSession();
   }, [token]);
 
-  const login = async (email, password) => {
+  const login = async (emailOrCredentials, maybePassword) => {
+    let email = emailOrCredentials;
+    let password = maybePassword;
+    if (typeof emailOrCredentials === 'object' && emailOrCredentials !== null) {
+      email = emailOrCredentials.email;
+      password = emailOrCredentials.password;
+    }
     const res = await authService.login({ email, password });
     if (res.success && res.data.token) {
       localStorage.setItem('eventforge_token', res.data.token);

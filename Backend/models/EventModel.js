@@ -77,6 +77,10 @@ const eventSchema = new mongoose.Schema({
   tags: [{
     type: String,
     trim: true
+  }],
+  assignedStaff: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }]
 }, {
   timestamps: true

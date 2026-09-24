@@ -56,28 +56,28 @@ const GrowthChart = () => {
   const currentData = growthData[metric] || growthData.users;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col justify-between h-full min-w-0 overflow-hidden">
+    <div className="panel flex flex-col justify-between h-full min-w-0 overflow-hidden">
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 min-w-0">
           <div className="min-w-0">
-            <h3 className="text-base font-bold text-slate-900 tracking-tight truncate">
+            <h3 className="text-base font-display font-bold text-ink tracking-tight truncate">
               Platform Growth
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5 truncate">
+            <p className="text-xs text-muted mt-0.5 truncate">
               Platform activity over the last 6 months
             </p>
           </div>
 
           {/* Clean Segmented Control */}
-          <div className="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-medium text-slate-600 gap-0.5 shrink-0">
+          <div className="inline-flex items-center bg-bg border border-line p-0.5 rounded-lg text-xs font-medium text-muted gap-0.5 shrink-0">
             {['users', 'organizations', 'events', 'registrations'].map((key) => (
               <button
                 key={key}
                 onClick={() => setMetric(key)}
-                className={`px-2.5 py-1 rounded-md capitalize transition-all ${
+                className={`px-2.5 py-1 rounded-md capitalize transition-all cursor-pointer ${
                   metric === key
-                    ? 'bg-white text-blue-600 font-semibold shadow-2xs'
-                    : 'hover:text-slate-900'
+                    ? 'bg-surface text-accent font-semibold shadow-xs'
+                    : 'hover:text-ink'
                 }`}
               >
                 {key}
@@ -95,20 +95,20 @@ const GrowthChart = () => {
             >
               <defs>
                 <linearGradient id="adminGrowthGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#d9532f" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#d9532f" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
               <XAxis
                 dataKey="month"
-                stroke="#94a3b8"
+                stroke="var(--muted)"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#94a3b8"
+                stroke="var(--muted)"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -116,20 +116,20 @@ const GrowthChart = () => {
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  borderColor: '#e2e8f0',
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--line)',
                   borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                  color: 'var(--ink)',
                   fontSize: '12px',
                   padding: '8px 12px'
                 }}
                 formatter={(value) => [value.toLocaleString(), metricLabels[metric]]}
-                labelStyle={{ fontWeight: '600', color: '#0f172a' }}
+                labelStyle={{ fontWeight: '600', color: 'var(--ink)' }}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="#2563eb"
+                stroke="#d9532f"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#adminGrowthGradient)"
@@ -139,9 +139,9 @@ const GrowthChart = () => {
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-line flex items-center justify-between text-xs text-muted">
         <span className="font-medium truncate">Trend: Healthy enterprise expansion</span>
-        <span className="font-semibold text-blue-600 shrink-0">Active Velocity</span>
+        <span className="font-semibold text-accent shrink-0">Active Velocity</span>
       </div>
     </div>
   );

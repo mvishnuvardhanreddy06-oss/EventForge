@@ -29,8 +29,8 @@ const registrationSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['free', 'pending', 'paid', 'refunded'],
-    default: 'paid'
+    enum: ['free', 'pending', 'paid', 'refunded', 'failed'],
+    default: 'pending'
   },
   couponId: {
     type: mongoose.Schema.Types.ObjectId,

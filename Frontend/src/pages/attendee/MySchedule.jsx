@@ -29,8 +29,9 @@ const MySchedule = () => {
   const fetchSchedule = async () => {
     try {
       const res = await attendeePortalService.getSchedule();
-      if (res.data?.success) {
-        setScheduleData(res.data.data);
+      const data = res?.data || res;
+      if (res?.success || res?.data?.success) {
+        setScheduleData(data.schedule ? data : (data.data || { schedule: [], availableSessions: [] }));
       }
     } catch (err) {
       console.error('Failed to load schedule:', err);
@@ -49,7 +50,7 @@ const MySchedule = () => {
     const targetStart = new Date(targetSession.startTime).getTime();
     const targetEnd = new Date(targetSession.endTime).getTime();
 
-    for (const s of scheduleData.schedule) {
+    for (const s of (scheduleData?.schedule || [])) {
       const sStart = new Date(s.startTime).getTime();
       const sEnd = new Date(s.endTime).getTime();
 
@@ -76,7 +77,7 @@ const MySchedule = () => {
     setActionInProgress(true);
     try {
       const res = await attendeePortalService.addToSchedule(sessionId);
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setConflictModalData(null);
         await fetchSchedule();
       }
@@ -91,7 +92,7 @@ const MySchedule = () => {
     setActionInProgress(true);
     try {
       const res = await attendeePortalService.removeFromSchedule(sessionId);
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         await fetchSchedule();
       }
     } catch (err) {

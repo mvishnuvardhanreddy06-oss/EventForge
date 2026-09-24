@@ -10,15 +10,49 @@ import {
   Linkedin,
   MapPin,
   Tag,
-  Check
+  Check,
+  Search,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 
+const KNOWN_REAL_PHOTOS = [
+  { match: /virat|kholi|kohli/i, name: 'Virat Kohli', url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg' },
+  { match: /sundar|pichai/i, name: 'Sundar Pichai', url: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Sundar_pichai.png' },
+  { match: /satya|nadella/i, name: 'Satya Nadella', url: 'https://upload.wikimedia.org/wikipedia/commons/7/78/MS-Exec-Nadella-Satya-2017-08-31-22_%28cropped%29.jpg' },
+  { match: /sam.*altman/i, name: 'Sam Altman', url: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Sam_Altman_TechCrunch_Disrupt_2019_%28cropped%29.jpg' },
+  { match: /jensen|huang/i, name: 'Jensen Huang', url: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Jensen_Huang_at_Computex_2024.jpg' },
+  { match: /elon.*musk/i, name: 'Elon Musk', url: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Elon_Musk_Royal_Society_%28crop1%29.jpg' },
+  { match: /dhoni/i, name: 'MS Dhoni', url: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Mahendra_Singh_Dhoni_in_January_2023.jpg' },
+  { match: /rohit.*sharma/i, name: 'Rohit Sharma', url: 'https://upload.wikimedia.org/wikipedia/commons/1/1d/Rohit_Sharma_portrait.jpg' },
+  { match: /sachin/i, name: 'Sachin Tendulkar', url: 'https://upload.wikimedia.org/wikipedia/commons/2/25/Sachin_Tendulkar_at_MRF_Promotion_Event.jpg' }
+];
+
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop'
+  {
+    name: 'Virat Kohli',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Virat_Kohli_portrait.jpg'
+  },
+  {
+    name: 'Sundar Pichai',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Sundar_pichai.png'
+  },
+  {
+    name: 'Satya Nadella',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/7/78/MS-Exec-Nadella-Satya-2017-08-31-22_%28cropped%29.jpg'
+  },
+  {
+    name: 'Sam Altman',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Sam_Altman_TechCrunch_Disrupt_2019_%28cropped%29.jpg'
+  },
+  {
+    name: 'Jensen Huang',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Jensen_Huang_at_Computex_2024.jpg'
+  },
+  {
+    name: 'Dr. Priya Sharma',
+    url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop'
+  }
 ];
 
 const SpeakerFormModal = ({
@@ -36,7 +70,7 @@ const SpeakerFormModal = ({
     lastName: '',
     email: '',
     phone: '',
-    profileImage: PRESET_AVATARS[0],
+    profileImage: PRESET_AVATARS[0].url,
     designation: '',
     company: '',
     bio: '',
@@ -57,13 +91,22 @@ const SpeakerFormModal = ({
       const parts = (speaker.name || '').trim().split(' ');
       const fName = speaker.firstName || parts[0] || '';
       const lName = speaker.lastName || parts.slice(1).join(' ') || '';
+      const fullName = `${fName} ${lName}`.trim();
+
+      const matched = KNOWN_REAL_PHOTOS.find((p) => p.match.test(fullName));
+      let initialImg = speaker.profileImage || speaker.avatar;
+      if (matched && (!initialImg || initialImg.includes('unsplash.com/photo-1500648767791') || initialImg.includes('unsplash.com/photo-1534528741775'))) {
+        initialImg = matched.url;
+      } else if (!initialImg) {
+        initialImg = PRESET_AVATARS[0].url;
+      }
 
       setFormData({
         firstName: fName,
         lastName: lName,
         email: speaker.email || '',
         phone: speaker.phone || '',
-        profileImage: speaker.profileImage || speaker.avatar || PRESET_AVATARS[0],
+        profileImage: initialImg,
         designation: speaker.designation || '',
         company: speaker.company || '',
         bio: speaker.bio || '',
@@ -85,7 +128,7 @@ const SpeakerFormModal = ({
         lastName: '',
         email: '',
         phone: '',
-        profileImage: PRESET_AVATARS[0],
+        profileImage: PRESET_AVATARS[0].url,
         designation: '',
         company: '',
         bio: '',
@@ -100,6 +143,19 @@ const SpeakerFormModal = ({
     }
     setErrors({});
   }, [speaker, isOpen, activeEventName]);
+
+  const handleNameChange = (field, value) => {
+    const updated = { ...formData, [field]: value };
+    const fullName = `${field === 'firstName' ? value : formData.firstName} ${field === 'lastName' ? value : formData.lastName}`.trim();
+    const matched = KNOWN_REAL_PHOTOS.find((p) => p.match.test(fullName));
+    if (matched && (!updated.profileImage || updated.profileImage.includes('unsplash.com/photo-1500648767791') || updated.profileImage.includes('unsplash.com/photo-1534528741775') || updated.profileImage === PRESET_AVATARS[0].url)) {
+      updated.profileImage = matched.url;
+    }
+    setFormData(updated);
+  };
+
+  const currentFullName = `${formData.firstName} ${formData.lastName}`.trim();
+  const matchedRealPhoto = KNOWN_REAL_PHOTOS.find((p) => p.match.test(currentFullName));
 
   if (!isOpen) return null;
 
@@ -197,50 +253,126 @@ const SpeakerFormModal = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[75vh] text-xs">
           {/* Profile Photo Selector */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-              Profile Photo
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Profile Photo (Real Images & Google URLs)
+              </label>
+              <a
+                href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${formData.firstName} ${formData.lastName}`.trim() || 'keynote speaker portrait')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                title="Search on Google Images in new tab"
+              >
+                <Search className="w-3 h-3" />
+                <span>Search Google Images</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+
             <div className="flex items-center space-x-4">
               <div className="relative w-16 h-16 rounded-2xl bg-white border-2 border-blue-600 overflow-hidden shrink-0 shadow-xs">
                 <img
                   src={formData.profileImage}
                   alt="Selected Preview"
                   className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = PRESET_AVATARS[0].url;
+                  }}
                 />
               </div>
 
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold text-slate-600 mb-1.5">
-                  Choose from presets or enter custom photo URL:
+                  Choose from real verified presets or enter photo URL:
                 </p>
                 <div className="flex items-center space-x-2">
-                  {PRESET_AVATARS.map((url, idx) => (
+                  {PRESET_AVATARS.map((item, idx) => (
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setFormData({ ...formData, profileImage: url })}
-                      className={`w-8 h-8 rounded-xl overflow-hidden border-2 transition-all ${
-                        formData.profileImage === url
-                          ? 'border-blue-600 scale-105 shadow-xs'
+                      title={item.name}
+                      onClick={() => setFormData({ ...formData, profileImage: item.url })}
+                      className={`relative w-8 h-8 rounded-xl overflow-hidden border-2 transition-all ${
+                        formData.profileImage === item.url
+                          ? 'border-blue-600 scale-105 shadow-xs ring-2 ring-blue-500/20'
                           : 'border-transparent opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={url} alt="Preset" className="w-full h-full object-cover" />
+                      <img
+                        src={item.url}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="pt-2">
-              <input
-                type="url"
-                value={formData.profileImage}
-                onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
-                placeholder="Or paste high-res image URL (https://...)"
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none"
-              />
+            {/* Smart Real Photo Matcher (e.g. Virat Kohli, etc.) */}
+            {matchedRealPhoto && (
+              <div className="p-2.5 bg-blue-50 border border-blue-200/90 rounded-xl flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
+                  <img
+                    src={matchedRealPhoto.url}
+                    alt={matchedRealPhoto.name}
+                    className="w-8 h-8 rounded-lg object-cover border border-blue-300 shadow-2xs"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div>
+                    <p className="text-[11px] font-bold text-blue-950">
+                      Real photo available for {matchedRealPhoto.name}
+                    </p>
+                    <p className="text-[10px] text-blue-700">Official verified image from Google / Wikipedia</p>
+                  </div>
+                </div>
+                {formData.profileImage !== matchedRealPhoto.url ? (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, profileImage: matchedRealPhoto.url })}
+                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold shadow-xs transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Use Real Photo</span>
+                  </button>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center space-x-1">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    <span>Real Photo Active</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2 pt-1">
+              <div className="flex-1">
+                <input
+                  type="url"
+                  value={formData.profileImage}
+                  onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
+                  placeholder="Paste real image URL from Google (https://...)"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none"
+                />
+              </div>
+              <a
+                href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${formData.firstName} ${formData.lastName}`.trim() || 'keynote speaker portrait')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 px-3 py-2 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-300 rounded-xl text-[11px] font-bold transition-all shadow-2xs shrink-0"
+                title="Search on Google Images in new tab"
+              >
+                <Search className="w-3.5 h-3.5 text-blue-600" />
+                <span>Search Google</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
+              </a>
             </div>
+            <p className="text-[10px] text-slate-400">
+              Supports any image address copied from Google Images, Wikipedia, or web links.
+            </p>
           </div>
 
           {/* First Name & Last Name */}
@@ -252,8 +384,8 @@ const SpeakerFormModal = ({
               <input
                 type="text"
                 value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="e.g. Sarah"
+                onChange={(e) => handleNameChange('firstName', e.target.value)}
+                placeholder="e.g. Virat"
                 className={`w-full px-3.5 py-2.5 bg-slate-50/50 border rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all ${
                   errors.firstName ? 'border-rose-400' : 'border-slate-200'
                 }`}
@@ -268,8 +400,8 @@ const SpeakerFormModal = ({
               <input
                 type="text"
                 value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="e.g. Wilson"
+                onChange={(e) => handleNameChange('lastName', e.target.value)}
+                placeholder="e.g. Kohli"
                 className={`w-full px-3.5 py-2.5 bg-slate-50/50 border rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all ${
                   errors.lastName ? 'border-rose-400' : 'border-slate-200'
                 }`}

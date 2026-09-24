@@ -29,9 +29,8 @@ const SponsorshipDetails = () => {
     const fetchDetails = async () => {
       try {
         const res = await sponsorPortalService.getSponsorshipDetails(sponsorshipId);
-        if (res.data?.success) {
-          setSponsorship(res.data.data.sponsorship);
-        }
+        const data = res?.data?.sponsorship || res?.sponsorship || res?.data || null;
+        setSponsorship(data);
       } catch (err) {
         console.error('Failed to fetch sponsorship details:', err);
       } finally {
@@ -54,12 +53,17 @@ const SponsorshipDetails = () => {
     );
   }
 
-  const ev = sponsorship.eventId || {};
-  const pkg = sponsorship.packageId || {};
-  const org = ev.organizationId || {};
+  const ev = typeof sponsorship.eventId === 'object' && sponsorship.eventId !== null
+    ? sponsorship.eventId
+    : { title: sponsorship.eventTitle, startDate: sponsorship.startDate, endDate: sponsorship.endDate };
+  const pkg = typeof sponsorship.packageId === 'object' && sponsorship.packageId !== null
+    ? sponsorship.packageId
+    : { name: sponsorship.package, benefits: sponsorship.benefits, price: sponsorship.investment };
+  const org = ev.organizationId || sponsorship.organizer || {};
   const deliverables = sponsorship.deliverables || [];
-  const completedCount = deliverables.filter(d => d.status === 'completed' || d.status === 'approved').length;
-  const progressPct = deliverables.length > 0 ? Math.round((completedCount / deliverables.length) * 100) : 100;
+  const completedCount = sponsorship.deliverablesCompleted ?? deliverables.filter(d => d.status === 'completed' || d.status === 'approved').length;
+  const totalCount = sponsorship.deliverablesTotal ?? deliverables.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

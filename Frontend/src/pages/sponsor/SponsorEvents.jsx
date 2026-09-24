@@ -28,9 +28,8 @@ const SponsorEvents = () => {
     const fetchEvents = async () => {
       try {
         const res = await sponsorPortalService.getEvents();
-        if (res.data?.success) {
-          setEvents(res.data.data.events || []);
-        }
+        const list = res?.data?.events || res?.events || res?.data?.data?.events || [];
+        setEvents(list);
       } catch (err) {
         console.error('Failed to fetch sponsor events:', err);
       } finally {

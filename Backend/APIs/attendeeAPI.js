@@ -290,7 +290,22 @@ router.get('/events/:eventId', async (req, res, next) => {
     const speakers = Array.from(speakerMap.values());
 
     // Fetch tickets
-    const tickets = await TicketModel.find({ eventId: event._id });
+    let tickets = await TicketModel.find({ eventId: event._id });
+    if (tickets.length === 0) {
+      const defaultTicket = await TicketModel.create({
+        eventId: event._id,
+        name: 'General Delegate Pass',
+        price: 0,
+        quantity: event.capacity || 1000,
+        sold: 0,
+        remaining: event.capacity || 1000,
+        saleStart: event.registrationStart || Date.now(),
+        saleEnd: event.registrationEnd || event.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        benefits: ['Full Conference Access', 'Keynotes & General Sessions', 'Digital Attendance Badge'],
+        status: 'active'
+      });
+      tickets = [defaultTicket];
+    }
 
     // Check if authenticated user is registered
     let userRegistration = null;
@@ -338,11 +353,16 @@ router.get('/events/:eventId', async (req, res, next) => {
   }
 });
 
-// 4. POST /api/attendee/register - Complete Registration & Payment with Indian Phone Validation
-router.post('/register', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), validateRequest(['eventId', 'ticketId']), async (req, res, next) => {
+// 4. POST /api/attendee/register and POST /api/attendee/events/:id/register
+router.post(['/register', '/events/:id/register'], verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), async (req, res, next) => {
   try {
-    const { eventId, ticketId, phone, attendeeName } = req.body;
+    const eventId = req.params.id || req.body.eventId;
+    const { ticketId, phone, attendeeName } = req.body;
     const attendeeId = req.user._id;
+
+    if (!eventId || !ticketId) {
+      return res.status(400).json({ success: false, message: 'eventId and ticketId are required.' });
+    }
 
     // Validate Indian Phone Number format (+91 followed by 10 digits)
     if (phone) {
@@ -431,6 +451,7 @@ router.post('/register', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), v
       success: true,
       message: 'Registration completed successfully!',
       data: {
+        registration,
         registrationId: registration._id,
         registrationNumber,
         qrToken,
@@ -488,13 +509,19 @@ router.get('/registrations', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN
   }
 });
 
-// 6. GET /api/attendee/tickets - Active Tickets with signed QR code
-router.get('/tickets', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), async (req, res, next) => {
+// 6. GET /api/attendee/tickets and GET /api/attendee/tickets/:registrationId
+router.get(['/tickets', '/tickets/:registrationId'], verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), async (req, res, next) => {
   try {
-    const registrations = await RegistrationModel.find({
+    const { registrationId } = req.params;
+    const query = {
       attendeeId: req.user._id,
       status: 'confirmed'
-    })
+    };
+    if (registrationId) {
+      query._id = registrationId;
+    }
+
+    const registrations = await RegistrationModel.find(query)
       .populate({
         path: 'eventId',
         select: 'title startDate endDate venueId bannerImage',
@@ -520,6 +547,19 @@ router.get('/tickets', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.ADMIN), asy
       status: r.checkedIn ? 'Used' : 'Confirmed',
       checkedInAt: r.checkedInAt
     }));
+
+    if (registrationId && tickets.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Ticket details retrieved',
+        data: {
+          ticket: tickets[0],
+          qrToken: tickets[0].qrToken,
+          qrCodeUrl: tickets[0].qrCodeUrl,
+          tickets
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -815,13 +855,15 @@ router.get('/feedback/available', verifyToken, verifyRole(ROLES.ATTENDEE, ROLES.
     const submittedFeedback = await FeedbackModel.find({ attendeeId: req.user._id });
     const reviewedEventIds = new Set(submittedFeedback.map(f => f.eventId.toString()));
 
-    const availableEvents = registrations.map(r => ({
-      eventId: r.eventId?._id,
-      title: r.eventId?.title || 'Global Tech Leadership Summit 2026',
-      date: r.eventId?.startDate ? new Date(r.eventId.startDate).toLocaleDateString() : 'September 24, 2026',
-      hasSubmitted: reviewedEventIds.has(r.eventId?._id?.toString()),
-      feedback: submittedFeedback.find(f => f.eventId.toString() === r.eventId?._id?.toString()) || null
-    }));
+    const availableEvents = registrations
+      .filter(r => r.eventId != null)
+      .map(r => ({
+        eventId: r.eventId._id,
+        title: r.eventId.title || 'Conference Event',
+        date: r.eventId.startDate ? new Date(r.eventId.startDate).toLocaleDateString() : 'Upcoming',
+        hasSubmitted: reviewedEventIds.has(r.eventId._id.toString()),
+        feedback: submittedFeedback.find(f => f.eventId.toString() === r.eventId._id.toString()) || null
+      }));
 
     res.status(200).json({
       success: true,

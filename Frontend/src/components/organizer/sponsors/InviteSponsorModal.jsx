@@ -9,18 +9,27 @@ We cordially invite your organization to partner with us as an official sponsor 
 
 Please review our sponsorship packages and confirm your participation. We look forward to collaborating with your brand.`;
 
+const DEFAULT_PACKAGES = [
+  { _id: 'pkg-platinum', name: 'Platinum Tier Partner', price: 250000 },
+  { _id: 'pkg-gold', name: 'Gold Tier Partner', price: 150000 },
+  { _id: 'pkg-silver', name: 'Silver Tier Partner', price: 75000 },
+  { _id: 'pkg-bronze', name: 'Bronze / Startup Partner', price: 35000 }
+];
+
 const InviteSponsorModal = ({
   isOpen,
   onClose,
   onInvite,
   packages = []
 }) => {
+  const availablePackages = Array.isArray(packages) && packages.length > 0 ? packages : DEFAULT_PACKAGES;
+
   const [form, setForm] = useState({
     companyName: '',
     contactPerson: '',
     email: '',
     phone: '',
-    packageId: packages[0]?._id || '',
+    packageId: availablePackages[0]?._id || '',
     message: DEFAULT_INVITE_MESSAGE
   });
 
@@ -173,9 +182,9 @@ const InviteSponsorModal = ({
               className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
             >
               <option value="">Select Package Tier</option>
-              {packages.map(p => (
+              {availablePackages.map(p => (
                 <option key={p._id || p.name} value={p._id || p.name}>
-                  {p.name} {p.price ? `(₹${p.price})` : ''}
+                  {p.name} {p.price ? `(₹${Number(p.price).toLocaleString('en-IN')})` : ''}
                 </option>
               ))}
             </select>

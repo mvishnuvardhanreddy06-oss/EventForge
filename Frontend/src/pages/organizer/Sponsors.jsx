@@ -8,70 +8,12 @@ import { Plus, Award, Send } from 'lucide-react';
 import InviteSponsorModal from '../../components/organizer/sponsors/InviteSponsorModal';
 import SponsorDetailsDrawer from '../../components/organizer/sponsors/SponsorDetailsDrawer';
 
-const MOCK_PACKAGES = [
-  { _id: 'pkg-1', name: 'Platinum Tier', price: 500000 },
-  { _id: 'pkg-2', name: 'Gold Tier', price: 250000 },
-  { _id: 'pkg-3', name: 'Silver Tier', price: 100000 }
-];
-
-const INITIAL_SPONSORS = [
-  {
-    _id: 'sp-101',
-    companyName: 'TechNova Solutions',
-    contactPerson: 'Rajesh Sharma',
-    email: 'partnerships@technova.io',
-    phone: '+919876543210',
-    paymentContactPerson: 'Suresh Kumar',
-    paymentPhone: '+919812345678',
-    contractContactPerson: 'Pooja Verma',
-    contractPhone: '+919898765432',
-    packageId: { _id: 'pkg-1', name: 'Platinum Tier' },
-    website: 'https://technova.io',
-    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop',
-    status: 'active'
-  },
-  {
-    _id: 'sp-102',
-    companyName: 'CloudScale Technologies',
-    contactPerson: 'Ananya Deshmukh',
-    email: 'sponsorship@cloudscale.in',
-    phone: '+919823456789',
-    paymentContactPerson: 'Vikram Rao',
-    paymentPhone: '+919834567890',
-    contractContactPerson: 'Ananya Deshmukh',
-    contractPhone: '+919823456789',
-    packageId: { _id: 'pkg-2', name: 'Gold Tier' },
-    website: 'https://cloudscale.in',
-    logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&auto=format&fit=crop',
-    status: 'approved'
-  },
-  {
-    _id: 'sp-103',
-    companyName: 'FinCore Labs',
-    contactPerson: 'Amitabh Sen',
-    email: 'events@fincore.org',
-    phone: '+919845012345',
-    paymentContactPerson: 'Kavita Menon',
-    paymentPhone: '+919867012345',
-    contractContactPerson: 'Amitabh Sen',
-    contractPhone: '+919845012345',
-    packageId: { _id: 'pkg-3', name: 'Silver Tier' },
-    website: 'https://fincore.org',
-    logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=200&auto=format&fit=crop',
-    status: 'active'
-  }
-];
-
 const Sponsors = () => {
-  const [sponsors, setSponsors] = useState(INITIAL_SPONSORS);
-  const [events, setEvents] = useState([
-    { _id: 'evt-1', title: 'Global Tech Leadership Summit 2026' },
-    { _id: 'evt-2', title: 'AI & Cloud Innovation Conference' },
-    { _id: 'evt-3', title: 'FinTech Future Forum' }
-  ]);
-  const [selectedEventId, setSelectedEventId] = useState('evt-1');
-  const [packages, setPackages] = useState(MOCK_PACKAGES);
-  const [loading, setLoading] = useState(false);
+  const [sponsors, setSponsors] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Modals & Drawers State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -81,33 +23,50 @@ const Sponsors = () => {
 
   const fetchSponsors = async (eventId) => {
     try {
-      const [spRes, pkgRes] = await Promise.all([
+      const [spRes, pkgRes] = await Promise.allSettled([
         sponsorService.getAll({ eventId }),
         sponsorshipService.getPackages({ eventId })
       ]);
-      if (spRes?.success && spRes.data?.sponsors?.length > 0) {
-        setSponsors(spRes.data.sponsors);
+      if (spRes.status === 'fulfilled') {
+        const rawSponsors = spRes.value?.data?.sponsors || spRes.value?.sponsors || [];
+        setSponsors(Array.isArray(rawSponsors) ? rawSponsors : []);
       }
-      if (pkgRes?.success && pkgRes.data?.packages?.length > 0) {
-        setPackages(pkgRes.data.packages);
+      if (pkgRes.status === 'fulfilled') {
+        const rawPackages = pkgRes.value?.data?.packages || pkgRes.value?.packages || [];
+        if (Array.isArray(rawPackages) && rawPackages.length > 0) {
+          setPackages(rawPackages);
+        } else {
+          // If no packages tied specifically to this event, fetch all active packages across the platform
+          try {
+            const allPkgRes = await sponsorshipService.getPackages({});
+            const fallbackPackages = allPkgRes?.data?.packages || allPkgRes?.packages || [];
+            if (Array.isArray(fallbackPackages) && fallbackPackages.length > 0) {
+              setPackages(fallbackPackages);
+            }
+          } catch (_) {}
+        }
       }
     } catch (e) {
-      console.info('API fallback active; displaying enterprise sponsor roster.');
+      console.error('Failed to fetch sponsors from database:', e);
     }
   };
 
   useEffect(() => {
     const fetchInitial = async () => {
+      setLoading(true);
       try {
         const evRes = await eventService.getAll();
-        if (evRes?.success && evRes.data?.events?.length > 0) {
-          setEvents(evRes.data.events);
-          const initialEventId = evRes.data.events[0]._id;
+        const evList = evRes?.data?.events || evRes?.events || [];
+        if (Array.isArray(evList) && evList.length > 0) {
+          setEvents(evList);
+          const initialEventId = evList[0]._id;
           setSelectedEventId(initialEventId);
           await fetchSponsors(initialEventId);
         }
       } catch (e) {
-        console.info('Using local event state.');
+        console.error('Failed to load initial event sponsors:', e);
+      } finally {
+        setLoading(false);
       }
     };
     fetchInitial();

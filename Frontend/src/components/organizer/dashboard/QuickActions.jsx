@@ -9,38 +9,38 @@ const QuickActions = () => {
       subtitle: 'Create a new corporate event.',
       link: '/organizer/events/create',
       icon: CalendarPlus,
-      color: 'bg-blue-50 text-blue-600'
+      color: 'bg-accent/10 text-accent'
     },
     {
       title: '+ Add Session',
       subtitle: 'Schedule a new session.',
       link: '/organizer/sessions',
       icon: Clock,
-      color: 'bg-indigo-50 text-indigo-600'
+      color: 'bg-teal/10 text-teal'
     },
     {
       title: '+ Add Speaker',
       subtitle: 'Add a speaker to an event.',
       link: '/organizer/speakers',
       icon: Mic,
-      color: 'bg-purple-50 text-purple-600'
+      color: 'bg-gold/10 text-gold'
     },
     {
       title: '+ Add Sponsor',
       subtitle: 'Manage event sponsorships.',
       link: '/organizer/sponsors',
       icon: Award,
-      color: 'bg-amber-50 text-amber-600'
+      color: 'bg-accent/10 text-accent'
     }
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4">
+    <div className="panel space-y-4">
       <div>
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+        <h3 className="text-sm sm:text-base font-display font-bold text-ink tracking-tight">
           Quick Actions
         </h3>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-xs text-muted mt-0.5">
           Fast shortcuts for common event lifecycle tasks.
         </p>
       </div>
@@ -52,19 +52,19 @@ const QuickActions = () => {
             <Link
               key={i}
               to={act.link}
-              className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200/70 hover:border-slate-300 rounded-xl p-3.5 transition-all group flex flex-col justify-between space-y-2"
+              className="slot group flex flex-col justify-between space-y-2 !p-3.5"
             >
               <div className="flex items-center justify-between">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${act.color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-muted opacity-0 group-hover:opacity-100 group-hover:text-accent transition-all" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-900 block group-hover:text-blue-600 transition-colors">
+                <span className="text-xs font-bold text-ink block group-hover:text-accent transition-colors">
                   {act.title}
                 </span>
-                <span className="text-[11px] text-slate-500 leading-snug mt-0.5 block">
+                <span className="text-[11px] text-muted leading-snug mt-0.5 block">
                   {act.subtitle}
                 </span>
               </div>

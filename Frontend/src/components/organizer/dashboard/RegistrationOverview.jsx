@@ -45,19 +45,19 @@ const RegistrationOverview = () => {
   const data = DATA_SETS[activeTab];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+    <div className="panel space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-line">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          <h3 className="text-base font-display font-bold text-ink tracking-tight">
             Registration Overview
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Registration performance across your events.
           </p>
         </div>
 
         {/* Time Tabs */}
-        <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
+        <div className="flex items-center space-x-1 bg-bg p-1 rounded-xl border border-line">
           {['7 Days', '30 Days', '3 Months', '6 Months'].map((tab) => (
             <button
               key={tab}
@@ -65,8 +65,8 @@ const RegistrationOverview = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === tab
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-surface text-ink shadow-sm'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               {tab}
@@ -76,22 +76,22 @@ const RegistrationOverview = () => {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50/70 p-3 rounded-xl border border-slate-200/60">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-bg/50 p-3 rounded-xl border border-line">
         <div>
-          <span className="text-[10px] font-bold text-slate-400 uppercase block">Registrations</span>
-          <span className="font-bold text-slate-900 text-sm">2,846</span>
+          <span className="text-[10px] font-bold text-muted uppercase block">Registrations</span>
+          <span className="font-display font-bold text-ink text-sm">2,846</span>
         </div>
         <div>
-          <span className="text-[10px] font-bold text-emerald-600 uppercase block">Confirmed</span>
-          <span className="font-bold text-emerald-700 text-sm">2,580</span>
+          <span className="text-[10px] font-bold text-teal uppercase block">Confirmed</span>
+          <span className="font-display font-bold text-teal text-sm">2,580</span>
         </div>
         <div>
-          <span className="text-[10px] font-bold text-amber-600 uppercase block">Waitlisted</span>
-          <span className="font-bold text-amber-700 text-sm">190</span>
+          <span className="text-[10px] font-bold text-gold uppercase block">Waitlisted</span>
+          <span className="font-display font-bold text-gold text-sm">190</span>
         </div>
         <div>
-          <span className="text-[10px] font-bold text-rose-600 uppercase block">Cancelled</span>
-          <span className="font-bold text-rose-700 text-sm">76</span>
+          <span className="text-[10px] font-bold text-accent uppercase block">Cancelled</span>
+          <span className="font-display font-bold text-accent text-sm">76</span>
         </div>
       </div>
 
@@ -101,19 +101,19 @@ const RegistrationOverview = () => {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="regGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#d9532f" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#d9532f" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-            <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} />
-            <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+            <XAxis dataKey="day" stroke="var(--muted)" fontSize={11} tickLine={false} />
+            <YAxis stroke="var(--muted)" fontSize={11} tickLine={false} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#0F172A',
+                backgroundColor: 'var(--surface)',
                 borderRadius: '12px',
-                border: 'none',
-                color: '#fff',
+                border: '1px solid var(--line)',
+                color: 'var(--ink)',
                 fontSize: '11px',
                 fontWeight: 'bold'
               }}
@@ -121,7 +121,7 @@ const RegistrationOverview = () => {
             <Area
               type="monotone"
               dataKey="registrations"
-              stroke="#2563EB"
+              stroke="#d9532f"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#regGradient)"

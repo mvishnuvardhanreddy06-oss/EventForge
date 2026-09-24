@@ -1,28 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { eventService } from '../../services/api';
+import { eventService, attendeePortalService } from '../../services/api';
 import Loader from '../../components/Loader';
 import Badge from '../../components/Badge';
 import SessionCard from '../../components/SessionCard';
 import TicketCard from '../../components/TicketCard';
 import { formatDate } from '../../utils/formatters';
-import { Calendar, MapPin, Users, Ticket, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Users, Ticket, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const AttendeeEventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [isRegistered, setIsRegistered] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await eventService.getById(id);
-        if (res.success) {
-          setEvent(res.data.event);
-          setTickets(res.data.tickets || []);
-          setSessions(res.data.sessions || []);
+        const res = await attendeePortalService.getEventDetails(id).catch(() => eventService.getById(id));
+        const evData = res?.data?.event || res?.event || res?.data;
+        if (evData) {
+          setEvent(evData);
+          setTickets(res?.data?.tickets || res?.tickets || []);
+          setSessions(res?.data?.sessions || res?.sessions || []);
+          if (res?.data?.registration?.isRegistered || res?.registration?.isRegistered) {
+            setIsRegistered(true);
+          }
         }
       } catch (e) {
         console.error(e);
@@ -68,13 +73,23 @@ const AttendeeEventDetails = () => {
             </div>
           </div>
 
-          <Link
-            to={`/attendee/register/${event._id}`}
-            className="inline-flex items-center space-x-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-xl shadow-blue-500/30 transition-all transform hover:-translate-y-0.5"
-          >
-            <span>Reserve Ticket & Register</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {isRegistered ? (
+            <Link
+              to="/attendee/tickets"
+              className="inline-flex items-center space-x-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xl shadow-emerald-500/30 transition-all transform hover:-translate-y-0.5"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Pass Active (View Ticket)</span>
+            </Link>
+          ) : (
+            <Link
+              to={`/attendee/register/${event._id}`}
+              className="inline-flex items-center space-x-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-xl shadow-blue-500/30 transition-all transform hover:-translate-y-0.5"
+            >
+              <span>Reserve Ticket & Register</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </div>
 

@@ -53,8 +53,8 @@ const SponsorSettings = () => {
     const fetchSettings = async () => {
       try {
         const res = await sponsorPortalService.getSettings();
-        if (res.data?.success && res.data.data.settings) {
-          const s = res.data.data.settings;
+        const s = res?.data?.settings || res?.settings || res?.data;
+        if (s) {
           setSettings({
             notifications: {
               ...settings.notifications,
@@ -102,10 +102,10 @@ const SponsorSettings = () => {
 
     try {
       const res = await sponsorPortalService.updateSettings(settings);
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setSettingsMsg({ type: 'success', text: 'Communication preferences saved successfully!' });
       } else {
-        setSettingsMsg({ type: 'error', text: res.data?.message || 'Failed to save settings.' });
+        setSettingsMsg({ type: 'error', text: res?.message || res?.data?.message || 'Failed to save settings.' });
       }
     } catch (err) {
       setSettingsMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Error saving settings.' });
@@ -133,11 +133,11 @@ const SponsorSettings = () => {
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword
       });
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setPasswordMsg({ type: 'success', text: 'Password changed successfully!' });
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        setPasswordMsg({ type: 'error', text: res.data?.message || 'Failed to update password.' });
+        setPasswordMsg({ type: 'error', text: res?.message || res?.data?.message || 'Failed to update password.' });
       }
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Error updating password.' });

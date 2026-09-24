@@ -29,9 +29,8 @@ const MyRegistrations = () => {
   const fetchRegistrations = async () => {
     try {
       const res = await attendeePortalService.getRegistrations();
-      if (res.data?.success) {
-        setRegistrations(res.data.data.registrations || []);
-      }
+      const list = res?.data?.registrations || res?.registrations || res?.data?.data?.registrations || [];
+      setRegistrations(list);
     } catch (err) {
       console.error('Failed to fetch registrations:', err);
     } finally {
@@ -48,7 +47,7 @@ const MyRegistrations = () => {
     setCancelling(true);
     try {
       const res = await attendeePortalService.cancelRegistration(id, { reason: 'User requested cancellation' });
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         alert('Registration cancelled successfully.');
         setSelectedReg(null);
         fetchRegistrations();

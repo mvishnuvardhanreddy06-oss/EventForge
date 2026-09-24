@@ -20,9 +20,15 @@ const SponsorCard = ({
     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md transition-shadow flex flex-col justify-between">
       <div>
         <div className="flex items-start justify-between mb-3">
-          <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center p-2">
+          <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center p-2 overflow-hidden">
             {sponsor.logo ? (
-              <img src={sponsor.logo} alt={sponsor.companyName} className="max-h-full max-w-full object-contain" />
+              <img
+                src={sponsor.logo}
+                alt={sponsor.companyName}
+                referrerPolicy="no-referrer"
+                className="max-h-full max-w-full object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
             ) : (
               <span className="font-black text-sm text-blue-600">{sponsor.companyName?.substring(0, 2).toUpperCase()}</span>
             )}

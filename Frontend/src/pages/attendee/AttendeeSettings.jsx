@@ -62,8 +62,8 @@ const AttendeeSettings = () => {
     const fetchSettings = async () => {
       try {
         const res = await attendeePortalService.getSettings();
-        if (res.data?.success && res.data.data.settings) {
-          const s = res.data.data.settings;
+        const s = res?.data?.settings || res?.settings || res?.data?.data?.settings;
+        if (s) {
           setProfile({
             name: s.name || '',
             email: s.email || '',
@@ -120,10 +120,10 @@ const AttendeeSettings = () => {
         notifications
       });
 
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setProfileMsg({ type: 'success', text: 'Account settings & notification preferences saved!' });
       } else {
-        setProfileMsg({ type: 'error', text: res.data?.message || 'Failed to save settings.' });
+        setProfileMsg({ type: 'error', text: res?.message || res?.data?.message || 'Failed to save settings.' });
       }
     } catch (err) {
       setProfileMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Error saving settings.' });
@@ -151,11 +151,11 @@ const AttendeeSettings = () => {
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword
       });
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setPasswordMsg({ type: 'success', text: 'Password changed successfully!' });
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        setPasswordMsg({ type: 'error', text: res.data?.message || 'Failed to update password.' });
+        setPasswordMsg({ type: 'error', text: res?.message || res?.data?.message || 'Failed to update password.' });
       }
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.response?.data?.message || err.message || 'Error updating password.' });

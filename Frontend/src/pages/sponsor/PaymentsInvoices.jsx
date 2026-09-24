@@ -27,9 +27,8 @@ const PaymentsInvoices = () => {
   const fetchInvoices = async () => {
     try {
       const res = await sponsorPortalService.getInvoices();
-      if (res.data?.success) {
-        setInvoices(res.data.data.invoices || []);
-      }
+      const list = res?.data?.invoices || res?.invoices || res?.data?.data?.invoices || [];
+      setInvoices(list);
     } catch (err) {
       console.error('Failed to fetch invoices:', err);
     } finally {
@@ -45,7 +44,7 @@ const PaymentsInvoices = () => {
     setPaying(true);
     try {
       const res = await sponsorPortalService.payInvoice(invoiceId, { paymentMethod: 'Corporate Wire / Card' });
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         alert('Payment simulated & settled successfully!');
         setSelectedInvoice(null);
         fetchInvoices();
@@ -61,12 +60,12 @@ const PaymentsInvoices = () => {
 
   const filtered = invoices.filter(inv => {
     if (statusFilter === 'all') return true;
-    return inv.status === statusFilter;
+    return inv.status?.toLowerCase() === statusFilter.toLowerCase();
   });
 
-  const totalBilled = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-  const totalPaid = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.amount || 0), 0);
-  const totalPending = totalBilled - totalPaid;
+  const totalBilled = invoices.reduce((sum, inv) => sum + (inv.total || inv.amount || 0), 0);
+  const totalPaid = invoices.filter(inv => inv.status?.toLowerCase() === 'paid').reduce((sum, inv) => sum + (inv.total || inv.amount || 0), 0);
+  const totalPending = Math.max(0, totalBilled - totalPaid);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -159,7 +158,7 @@ const PaymentsInvoices = () => {
                       {formatDate(inv.dueDate)}
                     </td>
                     <td className="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                      {formatCurrency(inv.amount)}
+                      {formatCurrency(inv.total || inv.amount)}
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
@@ -264,12 +263,12 @@ const PaymentsInvoices = () => {
                     <td className="py-2.5 px-4 text-right">{formatCurrency(selectedInvoice.amount)}</td>
                   </tr>
                   <tr>
-                    <td className="py-2.5 px-4 text-slate-600">Tax (0%):</td>
-                    <td className="py-2.5 px-4 text-right">$0.00</td>
+                    <td className="py-2.5 px-4 text-slate-600">Tax ({selectedInvoice.tax > 0 ? '16%' : '0%'}):</td>
+                    <td className="py-2.5 px-4 text-right">{formatCurrency(selectedInvoice.tax || 0)}</td>
                   </tr>
                   <tr className="text-sm font-black text-slate-900">
                     <td className="py-3 px-4">Total Due:</td>
-                    <td className="py-3 px-4 text-right text-blue-600">{formatCurrency(selectedInvoice.amount)}</td>
+                    <td className="py-3 px-4 text-right text-blue-600">{formatCurrency(selectedInvoice.total || selectedInvoice.amount)}</td>
                   </tr>
                 </tfoot>
               </table>

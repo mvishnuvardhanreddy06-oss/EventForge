@@ -38,7 +38,7 @@ const EditEvent = () => {
         navigate(`/organizer/events/${id}`);
       }
     } catch (err) {
-      alert('Error updating event: ' + err.message);
+      alert(err.response?.data?.message || ('Error updating event: ' + err.message));
     } finally {
       setSaving(false);
     }

@@ -18,7 +18,16 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'eventforge_fallback_secret_2026');
+    if (!process.env.JWT_SECRET) {
+      console.error('[CRITICAL] JWT_SECRET environment variable is missing.');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error.',
+        error: { code: 'CONFIG_ERROR' }
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await UserModel.findById(decoded.id).select('-password');
 
     if (!user) {
@@ -40,10 +49,13 @@ const verifyToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[JWT Verification Failure]:', error.name, error.message);
+    }
     return res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',
-      error: { code: 'INVALID_TOKEN', details: error.message }
+      error: { code: 'INVALID_TOKEN' }
     });
   }
 };

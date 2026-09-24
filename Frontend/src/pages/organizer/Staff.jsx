@@ -14,6 +14,7 @@ import {
   STAFF_ROLES
 } from '../../services/staffService';
 import { formatIndianPhone } from '../../utils/phoneUtils';
+import { authService, eventService } from '../../services/api';
 
 // Reusable Components
 import StaffSummaryCards from '../../components/organizer/staff/StaffSummaryCards';
@@ -41,7 +42,7 @@ const Staff = () => {
   // Master Datasets
   const [staffList, setStaffList] = useState([]);
   const [shiftsList, setShiftsList] = useState([]);
-  const [events] = useState(MOCK_EVENTS);
+  const [events, setEvents] = useState(MOCK_EVENTS);
   const [venues] = useState(MOCK_VENUES);
   const [sessions] = useState(MOCK_SESSIONS);
 
@@ -85,12 +86,62 @@ const Staff = () => {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Load Initial Data from localStorage or Service
+  // Load Initial Data from real API and merge with staffService
   useEffect(() => {
-    const loadedStaff = staffService.getStaffList();
-    const loadedShifts = staffService.getShiftsList();
-    setStaffList(loadedStaff);
-    setShiftsList(loadedShifts);
+    const loadInitialData = async () => {
+      const loadedStaff = staffService.getStaffList();
+      const loadedShifts = staffService.getShiftsList();
+      try {
+        const [usersRes, eventsRes] = await Promise.allSettled([
+          authService.getUsers({ role: 'staff' }),
+          eventService.getAll()
+        ]);
+
+        if (usersRes.status === 'fulfilled') {
+          const apiStaff = usersRes.value?.data?.users || usersRes.value?.users || [];
+          if (Array.isArray(apiStaff) && apiStaff.length > 0) {
+            const mappedApiStaff = apiStaff.map(u => ({
+              _id: u._id,
+              firstName: u.name?.split(' ')[0] || 'Staff',
+              lastName: u.name?.split(' ').slice(1).join(' ') || 'Member',
+              email: u.email,
+              phone: u.phone || '+91 98765 43210',
+              role: 'Event Coordinator',
+              status: u.isActive !== false ? 'Active' : 'Inactive',
+              attendanceStatus: 'Off Duty',
+              organizationId: u.organizationId?._id || u.organizationId || 'org-apex',
+              shift: '08:00 AM – 06:00 PM',
+              shiftTime: '08:00 AM – 06:00 PM',
+              currentAssignment: 'General Event Support',
+              assignments: [],
+              sessionsManaged: 0,
+              checkInsAssisted: 0,
+              tasksCompleted: 0,
+              workload: 30,
+              activeResponsibilities: 1
+            }));
+            const merged = [...mappedApiStaff, ...loadedStaff.filter(s => !mappedApiStaff.some(a => a.email === s.email))];
+            setStaffList(merged);
+            staffService.saveStaffList(merged);
+          } else {
+            setStaffList(loadedStaff);
+          }
+        } else {
+          setStaffList(loadedStaff);
+        }
+
+        if (eventsRes.status === 'fulfilled') {
+          const apiEvents = eventsRes.value?.data?.events || eventsRes.value?.events || [];
+          if (Array.isArray(apiEvents) && apiEvents.length > 0) {
+            setEvents(apiEvents);
+          }
+        }
+      } catch (err) {
+        setStaffList(loadedStaff);
+      }
+      setShiftsList(loadedShifts);
+    };
+    loadInitialData();
   }, []);
 
   // Sync state to localStorage whenever modified

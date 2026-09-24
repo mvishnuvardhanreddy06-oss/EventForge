@@ -25,9 +25,8 @@ const Sponsorships = () => {
     const fetchSponsorships = async () => {
       try {
         const res = await sponsorPortalService.getSponsorships();
-        if (res.data?.success) {
-          setSponsorships(res.data.data.sponsorships || []);
-        }
+        const list = res?.data?.sponsorships || res?.sponsorships || [];
+        setSponsorships(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error('Failed to fetch sponsorships:', err);
       } finally {
@@ -39,15 +38,15 @@ const Sponsorships = () => {
 
   const filtered = sponsorships.filter(s => {
     if (statusFilter === 'all') return true;
-    return s.status === statusFilter;
+    return (s.status || '').toLowerCase() === statusFilter.toLowerCase();
   });
 
   if (loading) return <Loader text="Loading sponsorship contracts..." />;
 
-  const totalValue = sponsorships.reduce((sum, s) => sum + (s.contractAmount || s.packageId?.price || 0), 0);
-  const totalDeliverables = sponsorships.reduce((sum, s) => sum + (s.deliverables?.length || 0), 0);
+  const totalValue = sponsorships.reduce((sum, s) => sum + (s.contractAmount || s.investment || s.packageId?.price || 0), 0);
+  const totalDeliverables = sponsorships.reduce((sum, s) => sum + (s.deliverablesTotal ?? s.deliverables?.length ?? 0), 0);
   const completedDeliverables = sponsorships.reduce(
-    (sum, s) => sum + (s.deliverables?.filter(d => d.status === 'completed' || d.status === 'approved').length || 0),
+    (sum, s) => sum + (s.deliverablesCompleted ?? s.deliverables?.filter(d => d.status === 'completed' || d.status === 'approved').length ?? 0),
     0
   );
 
@@ -113,11 +112,12 @@ const Sponsorships = () => {
       ) : (
         <div className="space-y-4">
           {filtered.map((s) => {
-            const ev = s.eventId || {};
-            const pkg = s.packageId || {};
+            const ev = typeof s.eventId === 'object' && s.eventId !== null ? s.eventId : { title: s.event };
+            const pkg = typeof s.packageId === 'object' && s.packageId !== null ? s.packageId : { name: s.package };
             const delivs = s.deliverables || [];
-            const doneCount = delivs.filter(d => d.status === 'completed' || d.status === 'approved').length;
-            const pct = delivs.length > 0 ? Math.round((doneCount / delivs.length) * 100) : 100;
+            const doneCount = s.deliverablesCompleted ?? delivs.filter(d => d.status === 'completed' || d.status === 'approved').length;
+            const totalCount = s.deliverablesTotal ?? delivs.length;
+            const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 100;
 
             return (
               <div
@@ -127,29 +127,29 @@ const Sponsorships = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2.5">
-                      <h3 className="text-base font-bold text-slate-900">{ev.title || 'Conference Summit'}</h3>
+                      <h3 className="text-base font-bold text-slate-900">{ev.title || s.event || 'Conference Summit'}</h3>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">
-                        {pkg.name || 'Custom Package'}
+                        {pkg.name || s.package || 'Custom Package'}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
-                        s.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                        s.status?.toLowerCase() === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
                       }`}>
                         {s.status}
                       </span>
                     </div>
 
                     <p className="text-xs text-slate-500">
-                      Contract Period: {formatDate(ev.startDate)} — {formatDate(ev.endDate)} • Venue: {ev.venue?.name || 'Main Hall'}
+                      Contract Period: {formatDate(ev.startDate || s.startDate)} — {formatDate(ev.endDate || s.endDate)} • Venue: {ev.venue?.name || ev.venue || 'Main Hall'}
                     </p>
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0">
                     <div className="text-right">
                       <span className="text-[10px] font-bold uppercase text-slate-400">Investment</span>
-                      <p className="text-lg font-black text-slate-900">{formatCurrency(s.contractAmount || pkg.price || 0)}</p>
+                      <p className="text-lg font-black text-slate-900">{formatCurrency(s.contractAmount || s.investment || pkg.price || 0)}</p>
                     </div>
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize ${
-                      s.paymentStatus === 'paid'
+                      (s.paymentStatus || '').toLowerCase() === 'paid'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}>

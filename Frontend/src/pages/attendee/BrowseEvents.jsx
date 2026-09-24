@@ -19,6 +19,7 @@ import { formatDate, formatCurrency } from '../../utils/formatters';
 
 const BrowseEvents = () => {
   const [events, setEvents] = useState([]);
+  const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
@@ -34,9 +35,22 @@ const BrowseEvents = () => {
       if (format !== 'all') params.eventType = format;
       if (sortBy) params.sort = sortBy;
 
-      const res = await attendeePortalService.getEvents(params);
-      if (res.data?.success) {
-        setEvents(res.data.data.events || []);
+      const [res, regRes] = await Promise.all([
+        attendeePortalService.getEvents(params),
+        attendeePortalService.getRegistrations().catch(() => null)
+      ]);
+
+      const evList = res?.data?.events || res?.events || res?.data?.data?.events || [];
+      setEvents(evList);
+
+      const regList = regRes?.data?.registrations || regRes?.registrations || regRes?.data || [];
+      if (Array.isArray(regList)) {
+        const idSet = new Set(
+          regList
+            .filter(r => r && r.status !== 'cancelled' && r.eventId)
+            .map(r => String(r.eventId?._id || r.eventId))
+        );
+        setRegisteredEventIds(idSet);
       }
     } catch (e) {
       console.error('Failed to browse events:', e);
@@ -199,13 +213,23 @@ const BrowseEvents = () => {
                 >
                   Event Brief
                 </Link>
-                <Link
-                  to={`/attendee/register/${ev._id}`}
-                  className="flex-1 py-2 text-center bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center space-x-1"
-                >
-                  <Ticket className="w-3.5 h-3.5" />
-                  <span>Register</span>
-                </Link>
+                {registeredEventIds.has(String(ev._id)) ? (
+                  <Link
+                    to="/attendee/tickets"
+                    className="flex-1 py-2 text-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center space-x-1"
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Pass Active</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/attendee/register/${ev._id}`}
+                    className="flex-1 py-2 text-center bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center space-x-1"
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Register</span>
+                  </Link>
+                )}
               </div>
             </div>
           ))}

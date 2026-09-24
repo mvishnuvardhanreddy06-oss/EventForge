@@ -28,9 +28,8 @@ const MyTickets = () => {
     const fetchTickets = async () => {
       try {
         const res = await attendeePortalService.getTickets();
-        if (res.data?.success) {
-          setTickets(res.data.data.tickets || []);
-        }
+        const list = res?.data?.tickets || res?.tickets || res?.data?.data?.tickets || [];
+        setTickets(list);
       } catch (err) {
         console.error('Failed to fetch tickets:', err);
       } finally {

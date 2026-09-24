@@ -4,6 +4,12 @@ const path = require('path');
 const cors = require('cors');
 require('dotenv').config();
 
+// Fail startup immediately if JWT_SECRET is missing
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL CONFIGURATION ERROR: process.env.JWT_SECRET is missing. Application cannot start securely.');
+  process.exit(1);
+}
+
 const connectDB = require('./config/db');
 const { initSocket } = require('./config/socket');
 const errorHandler = require('./middlewares/errorHandler');
@@ -27,6 +33,7 @@ const notificationAPI = require('./APIs/notificationAPI');
 const analyticsAPI = require('./APIs/analyticsAPI');
 const aiAPI = require('./APIs/aiAPI');
 const attendeeAPI = require('./APIs/attendeeAPI');
+const subscriptionAPI = require('./APIs/subscriptionAPI');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { router: auditLogAPI } = require('./APIs/auditLogAPI');
@@ -156,6 +163,7 @@ app.use('/api/notifications', notificationAPI);
 app.use('/api/analytics', analyticsAPI);
 app.use('/api/ai', aiAPI);
 app.use('/api/attendee', attendeeAPI);
+app.use('/api/subscriptions', subscriptionAPI);
 app.use('/api/audit-logs', auditLogAPI);
 
 // Centralized Error Handling Middleware

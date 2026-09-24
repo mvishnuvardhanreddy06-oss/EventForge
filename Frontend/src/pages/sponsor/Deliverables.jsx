@@ -33,9 +33,8 @@ const Deliverables = () => {
   const fetchDeliverables = async () => {
     try {
       const res = await sponsorPortalService.getDeliverables();
-      if (res.data?.success) {
-        setDeliverables(res.data.data.deliverables || []);
-      }
+      const list = res?.data?.deliverables || res?.deliverables || [];
+      setDeliverables(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Failed to fetch deliverables:', err);
     } finally {
@@ -81,14 +80,14 @@ const Deliverables = () => {
         formData
       );
 
-      if (res.data?.success) {
+      if (res?.success || res?.data?.success) {
         setUploadSuccess('Asset uploaded successfully! The organizer will review it.');
         setTimeout(() => {
           setUploadModalItem(null);
           fetchDeliverables();
         }, 1200);
       } else {
-        setUploadError(res.data?.message || 'Failed to upload asset.');
+        setUploadError(res?.message || res?.data?.message || 'Failed to upload asset.');
       }
     } catch (err) {
       setUploadError(err.response?.data?.message || err.message || 'Upload failed');

@@ -47,7 +47,29 @@ const checkSpeakerConflict = async (SessionModel, { speakerId, startTime, endTim
   return conflict;
 };
 
+const checkVenueConflict = async (EventModel, { venueId, startDate, endDate, excludeEventId = null }) => {
+  if (!venueId || !startDate || !endDate) return null;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const query = {
+    venueId,
+    status: { $in: ['published', 'ongoing'] },
+    startDate: { $lt: end },
+    endDate: { $gt: start }
+  };
+
+  if (excludeEventId) {
+    query._id = { $ne: excludeEventId };
+  }
+
+  const conflict = await EventModel.findOne(query).populate('venueId', 'name city address');
+  return conflict;
+};
+
 module.exports = {
   checkRoomConflict,
-  checkSpeakerConflict
+  checkSpeakerConflict,
+  checkVenueConflict
 };

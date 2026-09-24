@@ -287,6 +287,31 @@ const Navbar = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  // Global theme state
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const saved = localStorage.getItem('theme');
+      if (saved) return saved === 'dark';
+      return document.documentElement.classList.contains('dark');
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    try {
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    } catch (e) {}
+  };
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -402,26 +427,24 @@ const Navbar = () => {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 h-16">
+    <header className="bg-surface/90 border-b border-line text-ink backdrop-blur sticky top-0 z-30 h-16 transition-colors duration-200">
       <div className="w-full px-4 sm:px-6 h-full flex items-center justify-between gap-4">
         {/* Left: Brand */}
         <div className="flex items-center space-x-3 shrink-0">
           <Link to="/" className="flex items-center space-x-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs transition-transform group-hover:scale-105">
-              <Layers className="w-4 h-4" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Event<span className="text-blue-600">Forge</span>
+            <i className="h-[22px] w-[22px] rounded-[7px_7px_7px_2px] bg-accent inline-block transition-transform group-hover:scale-105"></i>
+            <span className="text-xl font-display font-bold tracking-tight text-ink">
+              EventForge
             </span>
           </Link>
           {user?.role === 'organizer' ? (
-            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer transition-colors shadow-2xs">
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
+            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-line bg-bg text-ink text-xs font-semibold cursor-pointer transition-colors shadow-xs">
+              <Building2 className="w-3.5 h-3.5 text-accent" />
               <span>Apex Global Events</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-muted" />
             </div>
           ) : (
-            <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/80">
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-bg text-muted border border-line">
               Enterprise
             </span>
           )}
@@ -554,8 +577,19 @@ const Navbar = () => {
           </div>
         )}
 
-        {/* Right: Search Toggle (Mobile), Notifications & Profile */}
+        {/* Right: Search Toggle (Mobile), Theme Switcher, Notifications & Profile */}
         <div className="flex items-center space-x-2 sm:space-x-3 shrink-0 ml-auto">
+          {/* Global Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="btn text-xs font-semibold px-2.5 py-1.5"
+            aria-label="Switch color theme"
+            title="Toggle Light / Dark Mode"
+          >
+            {isDark ? <span>☀ Light</span> : <span>☾ Dark</span>}
+          </button>
+
           {user ? (
             <>
               {/* Mobile Search Button */}
@@ -564,7 +598,7 @@ const Navbar = () => {
                   setIsMobileSearchOpen(true);
                   setTimeout(() => mobileInputRef.current?.focus(), 50);
                 }}
-                className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="md:hidden p-2 text-muted hover:text-ink hover:bg-bg rounded-lg transition-colors"
                 aria-label="Search"
               >
                 <Search className="w-4 h-4" />
@@ -574,55 +608,55 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="relative p-2 text-muted hover:text-ink hover:bg-bg rounded-lg transition-colors cursor-pointer"
                   aria-label="Notifications"
                 >
                   <Bell className="w-4 h-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full ring-2 ring-surface" />
                   )}
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-xl shadow-lg border border-slate-200/80 py-2.5 z-50 overflow-hidden">
-                    <div className="flex items-center justify-between px-3.5 pb-2 border-b border-slate-100">
-                      <h4 className="text-xs font-bold text-slate-900 tracking-tight">Notifications</h4>
+                  <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-surface rounded-2xl shadow-2xl border border-line py-2.5 z-50 overflow-hidden text-ink">
+                    <div className="flex items-center justify-between px-3.5 pb-2 border-b border-line">
+                      <h4 className="text-xs font-display font-bold text-ink">Notifications</h4>
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}
-                          className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-[11px] text-accent hover:underline font-medium cursor-pointer"
                         >
                           Mark all read
                         </button>
                       )}
                     </div>
-                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100/80 text-xs">
-                      <div className="p-3 hover:bg-slate-50/70 transition-colors bg-blue-50/20">
+                    <div className="max-h-72 overflow-y-auto divide-y divide-line text-xs">
+                      <div className="p-3 hover:bg-bg/70 transition-colors bg-accent/5">
                         <div className="flex items-center justify-between mb-0.5">
-                          <p className="font-semibold text-slate-900">Organization approval required</p>
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                          <p className="font-semibold text-ink">Organization approval required</p>
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                         </div>
-                        <p className="text-slate-500 text-[11px]">2 tenant organizations require review and activation.</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">5 min ago</span>
+                        <p className="text-muted text-[11px]">2 tenant organizations require review and activation.</p>
+                        <span className="text-[10px] text-muted/70 mt-1 block">5 min ago</span>
                       </div>
-                      <div className="p-3 hover:bg-slate-50/70 transition-colors bg-blue-50/20">
+                      <div className="p-3 hover:bg-bg/70 transition-colors bg-accent/5">
                         <div className="flex items-center justify-between mb-0.5">
-                          <p className="font-semibold text-slate-900">Subscription expiring</p>
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <p className="font-semibold text-ink">Subscription expiring</p>
+                          <span className="w-1.5 h-1.5 rounded-full bg-gold" />
                         </div>
-                        <p className="text-slate-500 text-[11px]">Apex Global Events subscription renewal due in 3 days.</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">25 min ago</span>
+                        <p className="text-muted text-[11px]">Apex Global Events subscription renewal due in 3 days.</p>
+                        <span className="text-[10px] text-muted/70 mt-1 block">25 min ago</span>
                       </div>
-                      <div className="p-3 hover:bg-slate-50/70 transition-colors">
-                        <p className="font-semibold text-slate-900 mb-0.5">New organizer registered</p>
-                        <p className="text-slate-500 text-[11px]">Rahul Kumar registered under Nexus Tech Summits.</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">1 hour ago</span>
+                      <div className="p-3 hover:bg-bg/70 transition-colors">
+                        <p className="font-semibold text-ink mb-0.5">New organizer registered</p>
+                        <p className="text-muted text-[11px]">Rahul Kumar registered under Nexus Tech Summits.</p>
+                        <span className="text-[10px] text-muted/70 mt-1 block">1 hour ago</span>
                       </div>
                     </div>
-                    <div className="pt-2 px-3 border-t border-slate-100 text-center">
+                    <div className="pt-2 px-3 border-t border-line text-center">
                       <button
                         onClick={() => setShowNotifications(false)}
-                        className="w-full py-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                        className="w-full py-1 text-xs font-semibold text-accent hover:underline transition-colors cursor-pointer"
                       >
                         View All Notifications
                       </button>
@@ -631,32 +665,32 @@ const Navbar = () => {
                 )}
               </div>
 
-              {/* Admin Profile Dropdown */}
+              {/* User Profile Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center space-x-2.5 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="flex items-center space-x-2.5 p-1.5 rounded-lg hover:bg-bg transition-colors cursor-pointer"
                 >
-                  <div className={`w-7 h-7 rounded-full ${user.role === 'organizer' ? 'bg-blue-600' : 'bg-slate-900'} text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs`}>
+                  <div className="w-7 h-7 rounded-full bg-accent text-onaccent flex items-center justify-center font-bold text-xs uppercase shadow-sm">
                     {user?.name ? (user.name.toLowerCase().includes('vishnu') ? 'VR' : user.name.slice(0, 2).toUpperCase()) : 'VR'}
                   </div>
                   <div className="hidden md:block text-left">
-                    <div className="text-xs font-semibold text-slate-900 leading-tight">
+                    <div className="text-xs font-semibold text-ink leading-tight">
                       {user?.name || 'Vishnureddy'}
                     </div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                    <div className="text-[10px] font-bold text-muted uppercase tracking-wide">
                       {user.role === 'admin' ? 'Platform Admin' : user.role === 'organizer' ? 'EVENT ORGANIZER' : user.role}
                     </div>
                   </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:block" />
+                  <ChevronDown className="w-3.5 h-3.5 text-muted hidden md:block" />
                 </button>
 
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-200/80 py-1.5 z-50 text-xs">
-                    <div className="px-3.5 py-2 border-b border-slate-100">
-                      <p className="font-bold text-slate-900">{user?.name || 'Vishnureddy'}</p>
-                      <p className="text-slate-500 truncate text-[11px]">{user?.email || "mvishnuvardhanreddy33@gmail.com"}</p>
-                      <span className="mt-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 uppercase">
+                  <div className="absolute right-0 mt-2 w-52 bg-surface rounded-2xl shadow-2xl border border-line py-1.5 z-50 text-xs text-ink">
+                    <div className="px-3.5 py-2 border-b border-line">
+                      <p className="font-bold text-ink">{user?.name || 'Vishnureddy'}</p>
+                      <p className="text-muted truncate text-[11px]">{user?.email || "mvishnuvardhanreddy33@gmail.com"}</p>
+                      <span className="mt-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent uppercase">
                         {user.role === 'admin' ? 'Platform Admin' : user.role === 'organizer' ? 'EVENT ORGANIZER' : user.role}
                       </span>
                     </div>

@@ -25,12 +25,18 @@ export const eventService = {
   update: (id, data) => api.put(`/events/${id}`, data),
   delete: (id) => api.delete(`/events/${id}`),
   togglePublish: (id) => api.patch(`/events/${id}/publish`),
-  updateStatus: (id, status) => api.patch(`/events/${id}/status`, { status })
+  updateStatus: (id, status) => api.patch(`/events/${id}/status`, { status }),
+  getAssignedStaff: (id) => api.get(`/events/${id}/staff`),
+  assignStaff: (id, staffId) => api.post(`/events/${id}/staff`, { staffId }),
+  removeStaff: (id, staffId) => api.delete(`/events/${id}/staff/${staffId}`)
 };
 
 export const venueService = {
   getAll: (params) => api.get('/venues', { params }),
   getById: (id) => api.get(`/venues/${id}`),
+  checkAvailability: (id, params) => api.get(`/venues/${id}/check-availability`, { params }),
+  getAllConflicts: () => api.get('/venues/conflicts/all'),
+  getBookings: (id) => api.get(`/venues/${id}/bookings`),
   create: (data) => api.post('/venues', data),
   update: (id, data) => api.put(`/venues/${id}`, data),
   delete: (id) => api.delete(`/venues/${id}`),
@@ -91,6 +97,7 @@ export const registrationService = {
 export const attendanceService = {
   scanQR: (data) => api.post('/attendance/scan', data),
   recordSessionAttendance: (data) => api.post('/attendance/session', data),
+  unmarkSessionAttendance: (sessionId, attendeeId) => api.delete(`/attendance/session/${sessionId}/${attendeeId}`),
   getEventAttendance: (eventId) => api.get(`/attendance/event/${eventId}`),
   getSessionAttendance: (sessionId) => api.get(`/attendance/session/${sessionId}`),
   getMyHistory: () => api.get('/attendance/history')
@@ -123,6 +130,7 @@ export const notificationService = {
 
 export const analyticsService = {
   getOrganizerStats: (eventId) => api.get(`/analytics/organizer/${eventId}`),
+  getOrganizerDashboard: () => api.get('/analytics/organizer/dashboard'),
   getPlatformStats: () => api.get('/analytics/platform')
 };
 
@@ -196,6 +204,7 @@ export const attendeePortalService = {
   getNotifications: (params) => api.get('/attendee/notifications', { params }),
   markNotificationRead: (id) => api.patch(`/attendee/notifications/${id}/read`),
   markAllNotificationsRead: () => api.patch('/attendee/notifications/read-all'),
+  getAvailableFeedback: () => api.get('/attendee/feedback/available'),
   submitFeedback: (data) => api.post('/attendee/feedback', data),
   getSettings: () => api.get('/attendee/settings'),
   updateSettings: (data) => api.put('/attendee/settings', data),
@@ -208,4 +217,9 @@ export const auditLogService = {
   export: (params) => api.get('/audit-logs/export', { params })
 };
 
-
+export const subscriptionService = {
+  getPlans: () => api.get('/subscriptions/plans'),
+  createPlan: (data) => api.post('/subscriptions/plans', data),
+  updatePlan: (id, data) => api.put(`/subscriptions/plans/${id}`, data),
+  getOrganizations: () => api.get('/subscriptions/organizations'),
+};
