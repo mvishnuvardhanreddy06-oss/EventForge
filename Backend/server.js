@@ -175,14 +175,33 @@ app.use('/api/subscriptions', subscriptionAPI);
 app.use('/api/audit-logs', auditLogAPI);
 
 const fs = require('fs');
-const frontendDistPath = path.join(__dirname, '../Frontend/dist');
-if (fs.existsSync(frontendDistPath)) {
+const distCandidates = [
+  path.join(__dirname, '../Frontend/dist'),
+  path.join(__dirname, '../../Frontend/dist'),
+  path.join(process.cwd(), 'Frontend/dist'),
+  path.join(process.cwd(), '../Frontend/dist')
+];
+const frontendDistPath = distCandidates.find(p => fs.existsSync(p));
+
+if (frontendDistPath) {
   app.use(express.static(frontendDistPath));
   app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
       return next();
     }
     res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'EventForge API Backend is running. Frontend build not detected.',
+      endpoints: {
+        health: '/api/health',
+        events: '/api/events',
+        auth: '/api/auth/login'
+      }
+    });
   });
 }
 
