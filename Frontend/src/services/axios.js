@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+const RENDER_BACKEND_URL = 'https://eventforge-1.onrender.com';
+
 const getBaseURL = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
@@ -8,9 +10,13 @@ const getBaseURL = () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:5000/api';
     }
-    return '/api';
+    if (window.location.hostname.includes('onrender.com')) {
+      return '/api';
+    }
+    // Deployed on Vercel or any other domain
+    return `${RENDER_BACKEND_URL}/api`;
   }
-  return '/api';
+  return `${RENDER_BACKEND_URL}/api`;
 };
 
 const api = axios.create({

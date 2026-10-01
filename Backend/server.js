@@ -57,7 +57,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "http://127.0.0.1:*", "https://*.onrender.com", "wss://*.onrender.com"],
+      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "http://127.0.0.1:*", "https://*.onrender.com", "wss://*.onrender.com", "https://*.vercel.app", "wss://*.vercel.app"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: null
     }
@@ -81,8 +81,8 @@ app.use(cors({
     // Allow configured origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
-    // Allow *.onrender.com and localhost
-    if (origin.endsWith('.onrender.com') || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+    // Allow *.onrender.com, *.vercel.app, and localhost
+    if (origin.endsWith('.onrender.com') || origin.endsWith('.vercel.app') || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
 

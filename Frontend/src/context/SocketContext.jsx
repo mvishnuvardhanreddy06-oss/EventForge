@@ -20,15 +20,21 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
+    const RENDER_BACKEND_URL = 'https://eventforge-1.onrender.com';
+
     const getSocketURL = () => {
       if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
       if (typeof window !== 'undefined') {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           return 'http://localhost:5000';
         }
-        return window.location.origin;
+        if (window.location.hostname.includes('onrender.com')) {
+          return window.location.origin;
+        }
+        // Deployed on Vercel or any other domain
+        return RENDER_BACKEND_URL;
       }
-      return '';
+      return RENDER_BACKEND_URL;
     };
 
     const newSocket = io(getSocketURL(), {
