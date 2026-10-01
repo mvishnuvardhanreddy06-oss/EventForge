@@ -1,0 +1,15 @@
+{
+  "name": "eventforge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventForge - Corporate & Conference Event Management Platform",
+  "scripts": {
+    "build": "npm --prefix Frontend install && npm --prefix Frontend run build && npm --prefix Backend install",
+    "postinstall": "npm --prefix Backend install",
+    "start": "node Backend/server.js",
+    "start:backend": "cd Backend && node server.js",
+    "build:backend": "cd Backend && npm install",
+    "build:frontend": "cd Frontend && npm install && npm run build"
+  },
+  "dependencies": {}
+}

@@ -174,6 +174,18 @@ app.use('/api/attendee', attendeeAPI);
 app.use('/api/subscriptions', subscriptionAPI);
 app.use('/api/audit-logs', auditLogAPI);
 
+const fs = require('fs');
+const frontendDistPath = path.join(__dirname, '../Frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
 // Centralized Error Handling Middleware
 app.use(errorHandler);
 
