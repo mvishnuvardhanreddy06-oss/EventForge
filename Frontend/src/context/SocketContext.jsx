@@ -20,8 +20,18 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const socketServerUrl = import.meta.env.VITE_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
-    const newSocket = io(socketServerUrl, {
+    const getSocketURL = () => {
+      if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+      if (typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return 'http://localhost:5000';
+        }
+        return window.location.origin;
+      }
+      return '';
+    };
+
+    const newSocket = io(getSocketURL(), {
       auth: { token },
       reconnectionAttempts: 5,
       reconnectionDelay: 2000
