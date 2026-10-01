@@ -184,6 +184,7 @@ app.use('/api/audit-logs', auditLogAPI);
 
 const fs = require('fs');
 const distCandidates = [
+  path.join(__dirname, 'public'),
   path.join(__dirname, '../Frontend/dist'),
   path.join(__dirname, '../../Frontend/dist'),
   path.join(process.cwd(), 'Frontend/dist'),
