@@ -25,13 +25,10 @@ export const SocketProvider = ({ children }) => {
     const getSocketURL = () => {
       if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
       if (typeof window !== 'undefined') {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return 'http://localhost:5000';
-        }
         if (window.location.hostname.includes('onrender.com')) {
           return window.location.origin;
         }
-        // Deployed on Vercel or any other domain
+        // Localhost dev, Vercel, or custom domains connect to live Render backend
         return RENDER_BACKEND_URL;
       }
       return RENDER_BACKEND_URL;

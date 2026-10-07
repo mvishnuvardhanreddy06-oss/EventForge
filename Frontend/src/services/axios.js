@@ -7,13 +7,11 @@ const getBaseURL = () => {
     return import.meta.env.VITE_API_BASE_URL;
   }
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:5000/api';
-    }
+    // If self-hosted directly on Render, use relative /api
     if (window.location.hostname.includes('onrender.com')) {
       return '/api';
     }
-    // Deployed on Vercel or any other domain
+    // For localhost dev, Vercel, or other domains, connect to the live Render backend
     return `${RENDER_BACKEND_URL}/api`;
   }
   return `${RENDER_BACKEND_URL}/api`;
